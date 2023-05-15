@@ -105,7 +105,7 @@ public class FindOperation extends Operation {
                 dist = Util.xorDistance(i, destNode);
               } else {
                 // previously, it was the use of the xordistance this does affect the results
-                // 
+                //
                 int logDist = Util.logDistance(i, destNode);
                 dist = BigInteger.valueOf(logDist);
                 // dist = Util.xorDistance(i, destNode);

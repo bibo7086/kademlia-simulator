@@ -75,4 +75,13 @@ public class Util {
   public static BigInteger xorDistance(BigInteger a, BigInteger b) {
     return a.xor(b);
   }
+
+  public static int xorDistance2(BigInteger a, BigInteger b) {
+
+    // BigInteger xorResult = a.xor(b);
+    // int distance = xorResult.intValue() & 0xFF;
+
+    BigInteger xorResult = a.xor(b);
+    return xorResult.bitCount();
+  }
 }

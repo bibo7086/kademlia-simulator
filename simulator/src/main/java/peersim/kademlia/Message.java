@@ -74,6 +74,17 @@ public class Message extends SimpleEvent {
 
   public static final int MSG_GET_ANY_SAMPLE_RESPONSE = 15;
 
+  public static final int MSG_FIND_XOR = 16;
+
+  public static final int MSG_FIND_DIST_XOR = 17;
+
+  public static final int MSG_FIND_LOG = 18;
+
+  /** Message Type: FINDVALUE (message regarding value find) finding by distance */
+  public static final int MSG_FIND_DIST_LOG = 19;
+
+  /** Message Type: RESPONSE (respons message to a findvalue or findnode) */
+
   // ______________________________________________________________________________________________
   /** This Object contains the body of the message, no matter what it contains */
   public Object body = null;

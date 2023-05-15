@@ -286,10 +286,14 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
           if (fop instanceof GetOperation) {
             request = new Message(Message.MSG_GET);
-          } else if (KademliaCommonConfig.FINDMODE == 0 || KademliaCommonConfig.FINDMODE == 1) {
-            request = new Message(Message.MSG_FIND);
+          } else if (KademliaCommonConfig.FINDMODE == 0) {
+            request = new Message(Message.MSG_FIND_XOR);
+          } else if (KademliaCommonConfig.FINDMODE == 1) {
+            request = new Message(Message.MSG_FIND_DIST_XOR);
+          } else if (KademliaCommonConfig.FINDMODE == 2) {
+            request = new Message(Message.MSG_FIND_LOG);
           } else {
-            request = new Message(Message.MSG_FIND_DIST);
+            request = new Message(Message.MSG_FIND_DIST_LOG);
           }
 
           request.operationId = m.operationId;
@@ -297,11 +301,15 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
           request.dst = nodeIdtoNode(neighbour).getKademliaProtocol().getKademliaNode();
 
           if (KademliaCommonConfig.FINDMODE == 0
-              || KademliaCommonConfig.FINDMODE == 1
+              || KademliaCommonConfig.FINDMODE == 2
               || request.getType() == Message.MSG_GET) {
             request.body = fop.getDestNode();
-          } else {
+          } else if (KademliaCommonConfig.FINDMODE == 1) {
+            request.body = Util.xorDistance2(fop.getDestNode(), (BigInteger) fop.getBody());
+          } else if (KademliaCommonConfig.FINDMODE == 3) {
             request.body = Util.logDistance(fop.getDestNode(), (BigInteger) fop.getBody());
+          } else {
+
           }
 
           // Increment hop count
@@ -350,10 +358,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
           if (fop.getBody().equals("Automatically Generated Traffic")
               && fop.getClosest().containsKey(fop.getDestNode())) {
             // // Update statistics
-            // long timeInterval = (CommonState.getTime()) - (fop.getTimestamp());
-            // KademliaObserver.timeStore.add(timeInterval);
-            // KademliaObserver.hopStore.add(fop.nrHops);
-            // KademliaObserver.msg_deliv.add(1);
+            long timeInterval = (CommonState.getTime()) - (fop.getTimestamp());
+            KademliaObserver.timeStore.add(timeInterval);
+            KademliaObserver.hopStore.add(fop.nrHops);
+            KademliaObserver.msg_deliv.add(1);
           }
 
           return;
@@ -368,11 +376,6 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         logger.warning("Operation completed. reporting...");
         KademliaObserver.reportOperation(fop);
         findOp.remove(fop.getId());
-        // Update statistics
-        long timeInterval = (CommonState.getTime()) - (fop.getTimestamp());
-        KademliaObserver.timeStore.add(timeInterval);
-        KademliaObserver.hopStore.add(fop.nrHops);
-        KademliaObserver.msg_deliv.add(1);
       }
     }
   }
@@ -406,16 +409,20 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     // BigInteger[] neighbours2 = new BigInteger[KademliaCommonConfig.K];
 
     // Determine which neighbors to retrieve based on the type of message
-    if (m.getType() == Message.MSG_FIND || m.getType() == Message.MSG_GET) {
+    if (m.getType() == Message.MSG_FIND_XOR || m.getType() == Message.MSG_GET) {
       // Retrieve the k nearest neighbors for the provided key
       // There does seem to be a difference here though xor faster -- ofcourse here should always be
       // xor..., previously log?
       // The difference is subtle with 100 - 5000 nodes
       neighbours = this.routingTable.getNeighboursXor((BigInteger) m.body, m.src.getId());
       // neighbours2 = this.routingTable.getNeighboursLog((BigInteger) m.body, m.src.getId());
-    } else if (m.getType() == Message.MSG_FIND_DIST) {
+    } else if (m.getType() == Message.MSG_FIND_DIST_XOR) {
+      neighbours = this.routingTable.getNeighboursDistXOR((int) m.body);
+    } else if (m.getType() == Message.MSG_FIND_LOG) {
+      neighbours = this.routingTable.getNeighboursLog((BigInteger) m.body, m.src.getId());
+    } else if (m.getType() == Message.MSG_FIND_DIST_LOG) {
       // Retrieve the k neighbors within a distance range
-      neighbours = this.routingTable.getNeighbours((int) m.body);
+      neighbours = this.routingTable.getNeighboursDistLog((int) m.body);
     } else {
       // Invalid message type
       return;
@@ -478,16 +485,22 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     // Add the operation object to the find operation hash map
     findOp.put(fop.getId(), fop);
 
+    // the neigbors should depend on the type of operations. I think we should get the nodes based
+    // on the type of operation.
+
+    BigInteger[] neighbours = null;
+
     // Retrieve the ALPHA (not really alpha) closest nodes to the source node and add them to the
     // find operation
-    // There doesn't seem to be any change here whether we use the getNeigboursLog or
-    // getNeighbourXor - verify why !!!
-    
-    BigInteger[] neighbours =
-        this.routingTable.getNeighboursXor((BigInteger) m.body, this.getKademliaNode().getId());
+    if (KademliaCommonConfig.FINDMODE == 0 || KademliaCommonConfig.FINDMODE == 1) {
+      neighbours =
+          this.routingTable.getNeighboursXor((BigInteger) m.body, this.getKademliaNode().getId());
+    }
 
-    BigInteger[] neighbours2 =
-        this.routingTable.getNeighboursLog((BigInteger) m.body, this.getKademliaNode().getId());
+    if (KademliaCommonConfig.FINDMODE == 2 || KademliaCommonConfig.FINDMODE == 3) {
+      neighbours =
+          this.routingTable.getNeighboursLog((BigInteger) m.body, this.getKademliaNode().getId());
+    }
 
     fop.elaborateResponse(neighbours);
     fop.setAvailableRequests(KademliaCommonConfig.ALPHA);
@@ -512,10 +525,17 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         // Set the type of the message depending on the find mode
         if (m.type == Message.MSG_INIT_GET) {
           m.type = Message.MSG_GET;
-        } else if (KademliaCommonConfig.FINDMODE == 0 || KademliaCommonConfig.FINDMODE == 1) {
-          m.type = Message.MSG_FIND;
+        } else if (KademliaCommonConfig.FINDMODE == 0) {
+          m.type = Message.MSG_FIND_XOR;
+        } else if (KademliaCommonConfig.FINDMODE == 1) {
+          m.type = Message.MSG_FIND_DIST_XOR;
+          m.body = Util.xorDistance2(nextNode, (BigInteger) fop.getBody());
+
+        } else if (KademliaCommonConfig.FINDMODE == 2) {
+          m.type = Message.MSG_FIND_LOG;
+
         } else {
-          m.type = Message.MSG_FIND_DIST;
+          m.type = Message.MSG_FIND_DIST_LOG;
           m.body = Util.logDistance(nextNode, (BigInteger) fop.getBody());
         }
 
@@ -525,9 +545,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         fop.AddMessage(mbis.id);
         sendMessage(mbis, nextNode, myPid);
         // Increment the hop count of the operation if it's a distance-based find
-        if (m.getType() == Message.MSG_FIND_DIST) {
-          fop.nrHops++;
-        }
+        // if (m.getType() == Message.MSG_FIND_DIST) {
+        //   fop.nrHops++;
+        // }
+        fop.nrHops++;
       }
     }
     // Return a reference to the created operation object
@@ -564,7 +585,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     transport.send(src, dest, m, kademliaid);
 
     // If the message is a request, start the timeout timer
-    if (m.getType() == Message.MSG_FIND || m.getType() == Message.MSG_FIND_DIST) {
+    if (m.getType() == Message.MSG_FIND_XOR
+        || m.getType() == Message.MSG_FIND_DIST_XOR
+        || m.getType() == Message.MSG_FIND_LOG
+        || m.getType() == Message.MSG_FIND_DIST_LOG) {
       // Create a timeout object
       Timeout t = new Timeout(destId, m.id, m.operationId);
 
@@ -616,8 +640,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         handleInit(m, myPid);
         break;
 
-      case Message.MSG_FIND:
-      case Message.MSG_FIND_DIST:
+      case Message.MSG_FIND_XOR:
+      case Message.MSG_FIND_LOG:
+      case Message.MSG_FIND_DIST_XOR:
+      case Message.MSG_FIND_DIST_LOG:
       case Message.MSG_GET:
         // Handle a find or get message by calling handleFind().
         m = (Message) event;
