@@ -67,7 +67,7 @@ public class StateBuilder implements peersim.core.Control {
   }
 
   /**
-   * Execytes the Kademlia network by sorting the nodes in ascending order of nodeID, and randomly
+   * Executes the Kademlia network by sorting the nodes in ascending order of nodeID, and randomly
    * adding 100 (not the 50 mentioned in the previous comment) nodes to each node's k-bucket. Then
    * adds 50 nearby nodes to each node's k-bucket.
    *

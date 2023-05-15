@@ -6,38 +6,41 @@ import java.util.List;
 import java.util.TreeMap;
 
 /**
- * Gives an implementation for the rounting table component of a kademlia node
+ * Provides an implementation for the routing table component of a Kademlia node.
  *
- * @author Daniele Furlan, Maurizio Bonani
+* @author Daniele Furlan, Maurizio Bonani
  * @version 1.0
  */
 public class RoutingTable implements Cloneable {
 
-  // node ID of the node
+  /** Node ID of the node. */
   protected BigInteger nodeId = null;
 
-  // k-buckets
+  /** K-buckets. */
   protected TreeMap<Integer, KBucket> k_buckets = null;
 
-  // number of k-buckets
+  /** Number of k-buckets. */
   protected int nBuckets;
 
-  // bucket size
+  /** Bucket size. */
   protected int k;
-
-  // number of max bucket replacements
+  /** Number of maximum bucket replacements. */
   protected int maxReplacements;
 
-  // distance for the lowest bucket
+  /** Distance for the lowest bucket. */
   protected int bucketMinDistance;
 
-  // ______________________________________________________________________________________________
-  /** Instanciates a new empty routing table with the specified size */
-  // public RoutingTable() {
+  protected int findMode;
+  /**
+   * Instantiates a new routing table with the specified parameters.
+   *
+   * @param nBuckets the number of k-buckets
+   * @param k the bucket size
+   * @param maxReplacements the maximum number of bucket replacements
+   */
   public RoutingTable(int nBuckets, int k, int maxReplacements) {
-
     k_buckets = new TreeMap<Integer, KBucket>();
-    // initialize k-bukets
+    // Initializes k-buckets.
 
     this.nBuckets = nBuckets;
 
@@ -47,6 +50,9 @@ public class RoutingTable implements Cloneable {
 
     bucketMinDistance = KademliaCommonConfig.BITS - nBuckets;
 
+    this.findMode = KademliaCommonConfig.FINDMODE;
+
+    /** Fills the k-buckets map with empty buckets. */
     for (int i = 0; i <= nBuckets; i++) {
       k_buckets.put(i, new KBucket());
     }
@@ -55,14 +61,30 @@ public class RoutingTable implements Cloneable {
   // Add a neighbour to the correct k-bucket
   public boolean addNeighbour(BigInteger node) {
     // add the node to the k-bucket
-    return bucketAtDistance(Util.logDistance(nodeId, node)).addNeighbour(node);
+    if (findMode == 0 || findMode == 1) {
+      // Get the lenght of the longest common prefix (corresponding to the correct k-bucket)
+      int prefix_len = Util.prefixLen(nodeId, node);
+
+      // Add the node to the k-bucket
+      return k_buckets.get(prefix_len).addNeighbour(node);
+    } else {
+      return bucketAtDistance(Util.logDistance(nodeId, node)).addNeighbour(node);
+    }
   }
 
   // Remove a neighbour from the correct k-bucket
   public void removeNeighbour(BigInteger node) {
 
-    // Remove the node from the k-bucket
-    bucketAtDistance(Util.logDistance(nodeId, node)).removeNeighbour(node);
+    if (findMode == 0 || findMode == 1) {
+      // get the lenght of the longest common prefix (correspond to the correct k-bucket)
+      int prefix_len = Util.prefixLen(nodeId, node);
+
+      // add the node to the k-bucket
+      k_buckets.get(prefix_len).removeNeighbour(node);
+    } else {
+      // Remove the node from the k-bucket
+      bucketAtDistance(Util.logDistance(nodeId, node)).removeNeighbour(node);
+    }
   }
 
   // Return the neighbours with a specific common prefix len
@@ -82,8 +104,74 @@ public class RoutingTable implements Cloneable {
     return resultList.toArray(result);
   }
 
-  // Return the closest neighbour to a key from the correct k-bucket
-  public BigInteger[] getNeighbours(final BigInteger key, final BigInteger src) {
+  // return the closest neighbour to a key from the correct k-bucket
+  public BigInteger[] getNeighboursXor(final BigInteger key, final BigInteger src) {
+    // resulting neighbours
+    BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
+
+    // Neighbor candidates
+    ArrayList<BigInteger> neighbour_candidates = new ArrayList<BigInteger>();
+
+    // Get the length of the longest common prefix
+    int prefix_len = Util.prefixLen(nodeId, key);
+
+    if (prefix_len < 0) {
+      return new BigInteger[] {nodeId};
+    }
+
+    // Return the k-bucket if is is full
+    if (k_buckets.get(prefix_len).neighbours.size() >= KademliaCommonConfig.K) {
+      return k_buckets.get(prefix_len).neighbours.keySet().toArray(result);
+    }
+
+    // Otherwise get k closest nodes from all k-buckets
+    prefix_len = 0;
+    while (prefix_len < KademliaCommonConfig.BITS) {
+      neighbour_candidates.addAll(k_buckets.get(prefix_len).neighbours.keySet());
+      // Remove source id
+      neighbour_candidates.remove(src);
+      prefix_len++;
+    }
+
+    // Create a map (distance, node)
+    TreeMap<BigInteger, List<BigInteger>> distance_map =
+        new TreeMap<BigInteger, List<BigInteger>>();
+
+    // Handle the case where neigbour_candidate is empty
+    if (neighbour_candidates.isEmpty()) {
+      return new BigInteger[0];
+    }
+
+    for (BigInteger node : neighbour_candidates) {
+      if (distance_map.get(Util.xorDistance(node, key)) == null) {
+        List<BigInteger> l = new ArrayList<BigInteger>();
+        l.add(node);
+        distance_map.put(Util.xorDistance(node, key), l);
+        // System.out.println("I shouldnt be here xor...");
+      } else {
+
+        distance_map.get(Util.xorDistance(node, key)).add(node);
+      }
+    }
+
+    // Best neighbors
+
+    List<BigInteger> bestNeighbours = new ArrayList<BigInteger>();
+    for (List<BigInteger> list : distance_map.values()) {
+      for (BigInteger i : list) {
+        if (bestNeighbours.size() < KademliaCommonConfig.K) {
+          bestNeighbours.add(i);
+        } else break;
+      }
+    }
+    if (bestNeighbours.size() < KademliaCommonConfig.K)
+      result = new BigInteger[bestNeighbours.size()];
+
+    return bestNeighbours.toArray(result);
+  }
+
+  // Return the closest neighbour to a key from the correct k-bucket using the log distance
+  public BigInteger[] getNeighboursLog(final BigInteger key, final BigInteger src) {
     // Resulting neighbours
     BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
 
@@ -93,8 +181,11 @@ public class RoutingTable implements Cloneable {
     // Get the lenght of the longest common prefix
     int prefix_len = Util.logDistance(nodeId, key);
 
-    if (prefix_len < 0) return new BigInteger[] {nodeId};
-    // return the k-bucket if is full
+    if (prefix_len < 0) {
+      return new BigInteger[] {nodeId};
+    }
+
+    // Return the k-bucket if it is full
     if (bucketAtDistance(prefix_len).neighbours.size() >= KademliaCommonConfig.K) {
       return bucketAtDistance(prefix_len).neighbours.keySet().toArray(result);
     }
@@ -108,7 +199,6 @@ public class RoutingTable implements Cloneable {
       prefix_len++;
     }
 
-    // Create a map (distance, node)
     TreeMap<Integer, List<BigInteger>> distance_map = new TreeMap<Integer, List<BigInteger>>();
 
     for (BigInteger node : neighbour_candidates) {
@@ -133,6 +223,31 @@ public class RoutingTable implements Cloneable {
       result = new BigInteger[bestNeighbours.size()];
 
     return bestNeighbours.toArray(result);
+
+    // TreeMap<Integer, BigInteger> distance_map = new TreeMap<Integer, BigInteger>();
+
+    // // Handle the case where neigbour_candidate is empty
+    // if (neighbour_candidates.isEmpty()) {
+    //   return new BigInteger[0];
+    // }
+
+    // for (BigInteger node : neighbour_candidates) {
+    //   distance_map.put(Util.logDistance(node, key), node);
+    // }
+
+    // List<BigInteger> bestNeighbours = new ArrayList<BigInteger>();
+    // for (BigInteger node : distance_map.values()) {
+    //   if (bestNeighbours.size() < KademliaCommonConfig.K) {
+    //     bestNeighbours.add(node);
+    //   } else {
+    //     break;
+    //   }
+    // }
+    // if (bestNeighbours.size() < KademliaCommonConfig.K) {
+    //   result = new BigInteger[bestNeighbours.size()];
+    // }
+
+    // return bestNeighbours.toArray(result);
   }
 
   // ______________________________________________________________________________________________

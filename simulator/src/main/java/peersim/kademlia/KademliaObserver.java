@@ -176,6 +176,15 @@ public class KademliaObserver implements Control {
       //     "The average hope and latency " + hopStore.getAverage() + ", " +
       // timeStore.getAverage());
     }
+
+    System.out.println(
+        "the size of message is "
+            + messages.size()
+            + " sent = "
+            + find_op.getN()
+            + " success = "
+            + find_ok.getN()
+            + "\n");
   }
 
   /**
