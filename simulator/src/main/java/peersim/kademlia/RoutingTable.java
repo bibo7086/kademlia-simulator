@@ -3,6 +3,7 @@ package peersim.kademlia;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
@@ -78,7 +79,6 @@ public class RoutingTable implements Cloneable {
     if (findMode == 0 || findMode == 1) {
       // get the lenght of the longest common prefix (correspond to the correct k-bucket)
       int prefix_len = Util.prefixLen(nodeId, node);
-
       // add the node to the k-bucket
       k_buckets.get(prefix_len).removeNeighbour(node);
     } else {
@@ -111,30 +111,6 @@ public class RoutingTable implements Cloneable {
     return resultList.toArray(result);
   }
 
-  // // Return the neighbours with a specific common prefix len
-  // public BigInteger[] getNeighboursDistLog(final int dist) {
-  //   BigInteger[] result = new BigInteger[0];
-  //   ArrayList<BigInteger> resultList = new ArrayList<BigInteger>();
-  //   // Add neighbors at the given distance
-  //   resultList.addAll(bucketAtDistance(dist).neighbours.keySet());
-
-  //   if (resultList.size() < k && (dist + 1) <= 256) {
-  //     // Add neighbors at the next distance
-  //     resultList.addAll(bucketAtDistance(dist + 1).neighbours.keySet());
-  //     // Remove excess neighbors until the size is <= k
-  //     while (resultList.size() > k) resultList.remove(resultList.size() - 1);
-  //   }
-
-  //   // Add neighbors at the previous distance
-  //   if (resultList.size() < k & (dist - 1) >= 0) {
-  //     resultList.addAll(bucketAtDistance(dist - 1).neighbours.keySet());
-  //     // Remove excess neighbors until the size is <= k
-  //     while (resultList.size() > k) resultList.remove(resultList.size() - 1);
-  //   }
-
-  //   // Convert the resultList to an array and return it
-  //   return resultList.toArray(result);
-  // }
   public BigInteger[] getNeighboursDistLog(final int dist) {
     ArrayList<BigInteger> resultList = new ArrayList<>();
 
@@ -218,6 +194,7 @@ public class RoutingTable implements Cloneable {
         } else break;
       }
     }
+
     if (bestNeighbours.size() < KademliaCommonConfig.K)
       result = new BigInteger[bestNeighbours.size()];
 
@@ -276,32 +253,15 @@ public class RoutingTable implements Cloneable {
     if (bestNeighbours.size() < KademliaCommonConfig.K)
       result = new BigInteger[bestNeighbours.size()];
 
+    // Print the content of the distance_map
+    for (Entry<Integer, List<BigInteger>> entry : distance_map.entrySet()) {
+      Integer distance = entry.getKey();
+      List<BigInteger> nodes = entry.getValue();
+
+      System.out.println("Distance: " + distance);
+      System.out.println("Nodes: " + nodes);
+    }
     return bestNeighbours.toArray(result);
-
-    // TreeMap<Integer, BigInteger> distance_map = new TreeMap<Integer, BigInteger>();
-
-    // // Handle the case where neigbour_candidate is empty
-    // if (neighbour_candidates.isEmpty()) {
-    //   return new BigInteger[0];
-    // }
-
-    // for (BigInteger node : neighbour_candidates) {
-    //   distance_map.put(Util.logDistance(node, key), node);
-    // }
-
-    // List<BigInteger> bestNeighbours = new ArrayList<BigInteger>();
-    // for (BigInteger node : distance_map.values()) {
-    //   if (bestNeighbours.size() < KademliaCommonConfig.K) {
-    //     bestNeighbours.add(node);
-    //   } else {
-    //     break;
-    //   }
-    // }
-    // if (bestNeighbours.size() < KademliaCommonConfig.K) {
-    //   result = new BigInteger[bestNeighbours.size()];
-    // }
-
-    // return bestNeighbours.toArray(result);
   }
 
   // ______________________________________________________________________________________________

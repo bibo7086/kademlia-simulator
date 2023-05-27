@@ -29,6 +29,8 @@ public class FindOperation extends Operation {
 
   /** number of available find request message to send (it must be always less than ALPHA) */
   protected int available_requests;
+
+  protected int findMode;
   /**
    * This map contains the K closest nodes and corresponding boolean value that indicates if the
    * nodes has been already queried or not
@@ -47,7 +49,7 @@ public class FindOperation extends Operation {
 
     // initialize closestSet
     closestSet = new HashMap<BigInteger, Boolean>();
-
+    findMode = KademliaCommonConfig.FINDMODE;
     returned = new ArrayList<BigInteger>();
   }
 
@@ -79,37 +81,19 @@ public class FindOperation extends Operation {
 
     // Add each neighbor to the closest set
     for (BigInteger n : neighbours) {
-      BigInteger newdist;
       if (n != null) {
         if (!closestSet.containsKey(n)) {
           // If closest set is not full, add directly
           if (closestSet.size() < KademliaCommonConfig.K) {
             closestSet.put(n, false);
           } else { // Otherwise, find nodes with less distance in the closest set
-            if (KademliaCommonConfig.FINDMODE == 0 || KademliaCommonConfig.FINDMODE == 1) {
-              newdist = Util.xorDistance(n, destNode);
-            } else {
-              // There is a difference .. log seems to perform better with non-exact address
-              // xor performs better with the exact address
-              // newdist = Util.xorDistance(n, destNode);
-              int logDist = Util.logDistance(n, destNode);
-              newdist = BigInteger.valueOf(logDist);
-            }
+            BigInteger newdist = Util.xorDistance(n, destNode);
 
             // Find the node with max distance
             BigInteger maxdist = newdist;
             BigInteger nodemaxdist = n;
             for (BigInteger i : closestSet.keySet()) {
-              BigInteger dist;
-              if (KademliaCommonConfig.FINDMODE == 0 || KademliaCommonConfig.FINDMODE == 1) {
-                dist = Util.xorDistance(i, destNode);
-              } else {
-                // previously, it was the use of the xordistance this does affect the results
-                //
-                int logDist = Util.logDistance(i, destNode);
-                dist = BigInteger.valueOf(logDist);
-                // dist = Util.xorDistance(i, destNode);
-              }
+              BigInteger dist = Util.xorDistance(i, destNode);
 
               if (dist.compareTo(maxdist) > 0) {
                 maxdist = dist;
@@ -117,8 +101,6 @@ public class FindOperation extends Operation {
               }
             }
 
-            // If new node has less distance than the node with maximum distance in closest set,
-            // add new node and remove the one with maximum distance
             if (nodemaxdist.compareTo(n) != 0) {
               closestSet.remove(nodemaxdist);
               closestSet.put(n, false);
@@ -143,18 +125,8 @@ public class FindOperation extends Operation {
       if (n != null && closestSet.get(n) == false) {
         if (res == null) {
           res = n;
-        } else {
-          if (KademliaCommonConfig.FINDMODE == 0
-              || KademliaCommonConfig.FINDMODE == 1
-                  && (Util.xorDistance(n, destNode).compareTo(Util.xorDistance(res, destNode))
-                      < 0)) {
-            res = n;
-          } else if (Util.logDistance(n, destNode)
-              < Util.logDistance(
-                  res,
-                  destNode)) { // (Util.logDistance(n, destNode) < Util.logDistance(res, destNode))
-            res = n;
-          }
+        } else if (Util.xorDistance(n, destNode).compareTo(Util.xorDistance(res, destNode)) < 0) {
+          res = n;
         }
       }
     }

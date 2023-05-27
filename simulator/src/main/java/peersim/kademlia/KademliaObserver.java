@@ -177,14 +177,19 @@ public class KademliaObserver implements Control {
       // timeStore.getAverage());
     }
 
-    System.out.println(
-        "the size of message is "
-            + messages.size()
-            + " sent = "
-            + find_op.getN()
-            + " success = "
-            + find_ok.getN()
-            + "\n");
+    // Write the count data to the "count"file
+
+    try (FileWriter countWriter = new FileWriter(logFolderName + "/" + "count.csv")) {
+      // Write the count data to the "count" file
+      String countHeader = "message_count,find_op,find_ok\n";
+      countWriter.write(countHeader);
+      String countLine = messages.size() + "," + find_op.getN() + "," + find_ok.getN() + "\n";
+      countWriter.write(countLine);
+
+      countWriter.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   /**

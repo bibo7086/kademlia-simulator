@@ -57,7 +57,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
   /** UnreliableTransport object used for communication. */
   private UnreliableTransport transport;
 
-  /** Identifier for the tranport protocol (used in teh sendMessage method) - TODO: verify!!!. */
+  /** Identifier for the tranport protocol (used in the sendMessage method). */
   private int tid;
 
   /** Unique ID for this Kademlia node/network - TODO: verify!!!. */
@@ -367,7 +367,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
           return;
 
         } else {
-          // No neighbour available but exists outstanding request to wait
+          // No neighbour available but there exists outstanding request to wait
           logger.warning("No neighbour available but exists outstanding request to wait");
           return;
         }
@@ -408,14 +408,10 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     BigInteger[] neighbours = new BigInteger[KademliaCommonConfig.K];
     // BigInteger[] neighbours2 = new BigInteger[KademliaCommonConfig.K];
 
-    // Determine which neighbors to retrieve based on the type of message
+    // Determine which neighbors to retrieve based on the type of message/mode
+    // Retrieve the k nearest neighbors for the provided key
     if (m.getType() == Message.MSG_FIND_XOR || m.getType() == Message.MSG_GET) {
-      // Retrieve the k nearest neighbors for the provided key
-      // There does seem to be a difference here though xor faster -- ofcourse here should always be
-      // xor..., previously log?
-      // The difference is subtle with 100 - 5000 nodes
       neighbours = this.routingTable.getNeighboursXor((BigInteger) m.body, m.src.getId());
-      // neighbours2 = this.routingTable.getNeighboursLog((BigInteger) m.body, m.src.getId());
     } else if (m.getType() == Message.MSG_FIND_DIST_XOR) {
       neighbours = this.routingTable.getNeighboursDistXOR((int) m.body);
     } else if (m.getType() == Message.MSG_FIND_LOG) {
@@ -490,7 +486,8 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
     BigInteger[] neighbours = null;
 
-    // Retrieve the ALPHA (not really alpha) closest nodes to the source node and add them to the
+    // Retrieve the ALPHA (not really alpha should be k) closest nodes to the source node and add
+    // them to the
     // find operation
     if (KademliaCommonConfig.FINDMODE == 0 || KademliaCommonConfig.FINDMODE == 1) {
       neighbours =
@@ -756,7 +753,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     logger.setUseParentHandlers(false);
 
     // Set the logger's level to WARNING
-    logger.setLevel(Level.OFF);
+    logger.setLevel(Level.INFO);
     // logger.setLevel(Level.ALL);
 
     // Create a console handler for the logger

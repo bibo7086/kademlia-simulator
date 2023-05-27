@@ -25,7 +25,7 @@ public class KademliaCommonConfig {
   public static int MAXREPLACEMENT = 10;
 
   /** Find mode: 0 find by node id / 1 find by distance to node */
-  public static int FINDMODE = 1;
+  public static int FINDMODE = 3;
 
   /**
    * Provides short information about current Kademlia configuration
