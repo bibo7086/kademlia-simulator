@@ -11,66 +11,64 @@ import peersim.edsim.EDSimulator;
 /**
  * This control generates random search traffic from nodes to random destination node.
  *
- * @author Daniele Furlan, Maurizio Bonani
- * @version 1.0
+ * @author: Daniele Furlan, Maurizio Bonani
+ * @version: 1.0
  */
-
-// ______________________________________________________________________________________________
 public class TrafficGenerator implements Control {
 
-  // ______________________________________________________________________________________________
-  /** MSPastry Protocol to act */
+  /** MSPastry Protocol to act. */
   private static final String PAR_PROT = "protocol";
 
-  /** MSPastry Protocol ID to act */
+  /** MSPastry Protocol ID to act. */
   private final int pid;
 
   private boolean first = true;
-  // ______________________________________________________________________________________________
+
+  /**
+   * Constructs a TrafficGenerator object.
+   *
+   * @param prefix the prefix string
+   */
   public TrafficGenerator(String prefix) {
     pid = Configuration.getPid(prefix + "." + PAR_PROT);
   }
 
-  // ______________________________________________________________________________________________
   /**
-   * generates a random find node message, by selecting randomly the destination.
+   * Generates a random find node message by selecting a random destination.
    *
    * @return Message
    */
   private Message generateFindNodeMessage() {
-    // existing active destination node
+    // Get an existing active destination node
     Node n = Network.get(CommonState.r.nextInt(Network.size()));
     while (!n.isUp()) {
       n = Network.get(CommonState.r.nextInt(Network.size()));
     }
     BigInteger dst = ((KademliaProtocol) (n.getProtocol(pid))).getKademliaNode().getId();
 
+    // dst =
+    //     new BigInteger(
+    //         "70987251059937106302777755060552859513783347326599989320237112584485870950574");
     Message m = Message.makeInitFindNode(dst);
     m.timestamp = CommonState.getTime();
 
     return m;
   }
 
-  // ______________________________________________________________________________________________
   /**
-   * every call of this control generates and send a random find node message
+   * Generates and sends a random find node message (initated by every call of this control).
    *
    * @return boolean
    */
   public boolean execute() {
-
     Node start;
     do {
       start = Network.get(CommonState.r.nextInt(Network.size()));
     } while ((start == null) || (!start.isUp()));
 
-    // send message
+    // Send message
     EDSimulator.add(0, generateFindNodeMessage(), start, pid);
 
     return false;
   }
-
-  // ______________________________________________________________________________________________
-
-} // End of class
-// ______________________________________________________________________________________________
+}

@@ -1,14 +1,13 @@
 import sys
 from pprint import pformat
 import os
-from python.header import *
 
 def change_key(file, key, val):
     #make sure we don't overwrite an original config file
-    # assert(file not in config_files.values())
+    assert(file not in config_files.values())
     if type(key) is list:
         for k in key:
-            regex = "\"s@ ^" + k + " .*@" + k + " " + str(val) + "@g\"" 
+            regex = "\"s@^" + k + " .*@" + k + " " + str(val) + "@g\"" 
             result = os.system("sed -i " + regex + " " + file)
             #make sure the command succeeded
             assert(result == 0)

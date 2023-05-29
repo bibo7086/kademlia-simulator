@@ -3,7 +3,6 @@ package peersim.kademlia;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
@@ -87,58 +86,15 @@ public class RoutingTable implements Cloneable {
     }
   }
 
-  public BigInteger[] getNeighboursDistXOR(final int distance) {
-    BigInteger[] result = new BigInteger[0];
-    ArrayList<BigInteger> resultList = new ArrayList<BigInteger>();
-    // Add neighbors at the given distance
-    resultList.addAll(bucketAtDistanceXOR(distance).neighbours.keySet());
-
-    if (resultList.size() < k && (distance + 1) <= 256) {
-      // Add neighbors at the next distance
-      resultList.addAll(bucketAtDistanceXOR(distance + 1).neighbours.keySet());
-      // Remove excess neighbors until the size is <= k
-      while (resultList.size() > k) resultList.remove(resultList.size() - 1);
-    }
-
-    // Add neighbors at the previous distance
-    if (resultList.size() < k & (distance - 1) >= 0) {
-      resultList.addAll(bucketAtDistanceXOR(distance - 1).neighbours.keySet());
-      // Remove excess neighbors until the size is <= k
-      while (resultList.size() > k) resultList.remove(resultList.size() - 1);
-    }
-
-    // Convert the resultList to an array and return it
-    return resultList.toArray(result);
-  }
-
-  public BigInteger[] getNeighboursDistLog(final int dist) {
-    ArrayList<BigInteger> resultList = new ArrayList<>();
-
-    // Add neighbors at the given distance
-    resultList.addAll(bucketAtDistance(dist).neighbours.keySet());
-
-    if (resultList.size() < k && dist + 1 <= 256) {
-      // Add neighbors at the next distance
-      resultList.addAll(bucketAtDistance(dist + 1).neighbours.keySet());
-    }
-
-    if (resultList.size() < k && dist - 1 >= 0) {
-      // Add neighbors at the previous distance
-      resultList.addAll(bucketAtDistance(dist - 1).neighbours.keySet());
-    }
-
-    // Trim excess neighbors if the list exceeds k
-    while (resultList.size() > k) {
-      resultList.remove(resultList.size() - 1);
-    }
-
-    // Convert the resultList to an array and return it
-    return resultList.toArray(new BigInteger[0]);
-  }
-
-  // return the closest neighbour to a key from the correct k-bucket
+  /**
+   * Retrieves the closest neighbors to a key from the appropriate k-bucket using XOR metric.
+   *
+   * @param key the key to find neighbors for
+   * @param src the source node ID
+   * @return an array of BigInteger representing the closest neighbors
+   */
   public BigInteger[] getNeighboursXor(final BigInteger key, final BigInteger src) {
-    // resulting neighbours
+    // Resulting neighbours
     BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
 
     // Neighbor candidates
@@ -201,7 +157,88 @@ public class RoutingTable implements Cloneable {
     return bestNeighbours.toArray(result);
   }
 
-  // Return the closest neighbour to a key from the correct k-bucket using the log distance
+  /**
+   * Retrieves the neighbors using the distance XOR metric.
+   *
+   * @param distance the distance for which to retrieve the neighbors
+   * @return an array of BigInteger representing the neighbors
+   */
+  public BigInteger[] getNeighboursDistXOR(final int distance) {
+    BigInteger[] result = new BigInteger[0];
+    ArrayList<BigInteger> resultList = new ArrayList<BigInteger>();
+    // Add neighbors at the given distance
+    resultList.addAll(bucketAtDistance(distance).neighbours.keySet());
+
+    if (resultList.size() < k && (distance + 1) <= 256) {
+      // Add neighbors at the next distance
+      resultList.addAll(bucketAtDistance(distance + 1).neighbours.keySet());
+      // Remove excess neighbors until the size is <= k
+      while (resultList.size() > k) {
+        resultList.remove(resultList.size() - 1);
+      }
+    }
+
+    // Add neighbors at the previous distance
+    if (resultList.size() < k && (distance - 1) >= 0) {
+      resultList.addAll(bucketAtDistance(distance - 1).neighbours.keySet());
+
+      // Remove excess neighbors until the size is <= k
+      while (resultList.size() > k) {
+        resultList.remove(resultList.size() - 1);
+      }
+    }
+
+    // Convert the resultList to an array and return it
+    return resultList.toArray(result);
+  }
+
+  //   /**
+  //  * Retrieves the neighbors using the distance XOR metric.
+  //  *
+  //  * @param distance the distance representing the prefix lenght at which to retreive the
+  // neigbors
+  //  * @return an array of BigInteger representing the neighbors
+  //  */
+  // public BigInteger[] getNeighboursDistXOR2(final BigInteger distance) {
+  //   // Resulting neighbors
+  //   BigInteger[] result = new BigInteger[0];
+
+  //   // Neighbor candidates
+  //   ArrayList<BigInteger> resultList = new ArrayList<BigInteger>();
+
+  //   // Add neighbors at the given distance
+  //   resultList.addAll(bucketAtDistanceXOR(distance).neighbours.keySet());
+
+  //   if (resultList.size() < k && (distance + 1) <= 256) {
+  //     // Add neighbors at the next distance
+  //     resultList.addAll(bucketAtDistanceXOR(distance + 1).neighbours.keySet());
+  //     // Remove excess neighbors until the size is <= k
+  //     while (resultList.size() > k) {
+  //       resultList.remove(resultList.size() - 1);
+  //     }
+  //   }
+
+  //   // Add neighbors at the previous distance
+  //   if (resultList.size() < k && (distance - 1) >= 0) {
+  //     resultList.addAll(bucketAtDistanceXOR(distance - 1).neighbours.keySet());
+
+  //     // Remove excess neighbors until the size is <= k
+  //     while (resultList.size() > k) {
+  //       resultList.remove(resultList.size() - 1);
+  //     }
+  //   }
+
+  //   // Convert the resultList to an array and return it
+  //   return resultList.toArray(result);
+  // }
+
+  /**
+   * Return the closest neighbour to a key from the correct k-bucket using the log distance.
+   *
+   * @param key The key to find the closest neighbour to.
+   * @param src The source identifier to exclude from neighbour candidates.
+   * @return An array of the closest neighbours.
+   */
   public BigInteger[] getNeighboursLog(final BigInteger key, final BigInteger src) {
     // Resulting neighbours
     BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
@@ -209,7 +246,8 @@ public class RoutingTable implements Cloneable {
     // Neighbour candidates
     ArrayList<BigInteger> neighbour_candidates = new ArrayList<BigInteger>();
 
-    // Get the lenght of the longest common prefix
+    // Get the length of the longest common prefix (use a better description to capture the fact
+    // that log distance is being used)
     int prefix_len = Util.logDistance(nodeId, key);
 
     if (prefix_len < 0) {
@@ -221,7 +259,7 @@ public class RoutingTable implements Cloneable {
       return bucketAtDistance(prefix_len).neighbours.keySet().toArray(result);
     }
 
-    // Else get k closest node from all k-buckets
+    // Otherwise get k closest nodes from all k-buckets
     prefix_len = 0;
     while (prefix_len < KademliaCommonConfig.BITS) {
       neighbour_candidates.addAll(bucketAtDistance(prefix_len).neighbours.keySet());
@@ -253,16 +291,116 @@ public class RoutingTable implements Cloneable {
     if (bestNeighbours.size() < KademliaCommonConfig.K)
       result = new BigInteger[bestNeighbours.size()];
 
-    // Print the content of the distance_map
-    for (Entry<Integer, List<BigInteger>> entry : distance_map.entrySet()) {
-      Integer distance = entry.getKey();
-      List<BigInteger> nodes = entry.getValue();
-
-      System.out.println("Distance: " + distance);
-      System.out.println("Nodes: " + nodes);
-    }
     return bestNeighbours.toArray(result);
   }
+
+  /**
+   * Retrieves the neighbors using the distance logarithmic metric.
+   *
+   * @param dist the distance for which to retrieve the neighbors
+   * @return an array of BigInteger representing the neighbors
+   */
+  public BigInteger[] getNeighboursDistLog(final int dist) {
+    // Why use ArrayList if we don't make use of its specific features
+    // ArrayList<BigInteger> resultList = new ArrayList<>();
+
+    List<BigInteger> resultList = new ArrayList<>();
+
+    // Add neighbors at the given distance
+    resultList.addAll(bucketAtDistance(dist).neighbours.keySet());
+
+    if (resultList.size() < k && dist + 1 <= 256) {
+      // Add neighbors at the next distance
+      resultList.addAll(bucketAtDistance(dist + 1).neighbours.keySet());
+    }
+
+    if (resultList.size() < k && dist - 1 >= 0) {
+      // Add neighbors at the previous distance
+      resultList.addAll(bucketAtDistance(dist - 1).neighbours.keySet());
+    }
+
+    // // Trim excess neighbors if the list exceeds k
+    // while (resultList.size() > k) {
+    //   resultList.remove(resultList.size() - 1);
+    // }
+
+    // Trim excess neighbors if the list exceeds k
+    if (resultList.size() > k) {
+      resultList = resultList.subList(0, k);
+    }
+
+    // Convert the resultList to an array and return it
+    return resultList.toArray(new BigInteger[0]);
+  }
+
+  // Possible improvement of the getNeighboursXor code (in terms of readability 2ru the use of
+  // computeIfAbsent)
+  // /**
+  //  * Retrieves the closest neighbors to a key from the appropriate k-bucket using XOR metric.
+  //  *
+  //  * @param key the key to find neighbors for
+  //  * @param src the source node ID
+  //  * @return an array of BigInteger representing the closest neighbors
+  //  */
+  // public BigInteger[] getNeighboursXor(final BigInteger key, final BigInteger src) {
+  //   // Resulting neighbors
+  //   BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
+
+  //   // Neighbor candidates
+  //   ArrayList<BigInteger> neighborCandidates = new ArrayList<BigInteger>();
+
+  //   // Get the length of the longest common prefix
+  //   int prefixLen = Util.prefixLen(nodeId, key);
+
+  //   if (prefixLen < 0) {
+  //       return new BigInteger[]{nodeId};
+  //   }
+
+  //   // Return the k-bucket if it is full
+  //   if (k_buckets.get(prefixLen).neighbours.size() >= KademliaCommonConfig.K) {
+  //       return k_buckets.get(prefixLen).neighbours.keySet().toArray(result);
+  //   }
+
+  //   // Otherwise get k closest nodes from all k-buckets
+  //   prefixLen = 0;
+  //   while (prefixLen < KademliaCommonConfig.BITS) {
+  //       neighborCandidates.addAll(k_buckets.get(prefixLen).neighbours.keySet());
+  //       // Remove source ID
+  //       neighborCandidates.remove(src);
+  //       prefixLen++;
+  //   }
+
+  //   // Create a map (distance, nodes)
+  //   TreeMap<BigInteger, List<BigInteger>> distanceMap = new TreeMap<>();
+
+  //   // Handle the case where neighborCandidates is empty
+  //   if (neighborCandidates.isEmpty()) {
+  //       return new BigInteger[0];
+  //   }
+
+  //   for (BigInteger node : neighborCandidates) {
+  //       BigInteger distance = Util.xorDistance(node, key);
+  //       distanceMap.computeIfAbsent(distance, k -> new ArrayList<>()).add(node);
+  //   }
+
+  //   // Best neighbors
+  //   List<BigInteger> bestNeighbors = new ArrayList<>();
+  //   for (List<BigInteger> list : distanceMap.values()) {
+  //       for (BigInteger i : list) {
+  //           if (bestNeighbors.size() < KademliaCommonConfig.K) {
+  //               bestNeighbors.add(i);
+  //           } else {
+  //               break;
+  //           }
+  //       }
+  //   }
+
+  //   if (bestNeighbors.size() < KademliaCommonConfig.K) {
+  //       result = new BigInteger[bestNeighbors.size()];
+  //   }
+
+  //   return bestNeighbors.toArray(result);
+  // }
 
   // ______________________________________________________________________________________________
   public Object clone() {
@@ -304,13 +442,13 @@ public class RoutingTable implements Cloneable {
     return k_buckets.get(distance - bucketMinDistance - 1);
   }
 
-  protected KBucket bucketAtDistanceXOR(int distance) {
-    if (distance <= bucketMinDistance) {
-      return k_buckets.get(0);
-    }
+  // protected KBucket bucketAtDistanceXOR(int distance) {
+  //   if (distance <= bucketMinDistance) {
+  //     return k_buckets.get(0);
+  //   }
 
-    return k_buckets.get(distance - bucketMinDistance - 1);
-  }
+  //   return k_buckets.get(distance - bucketMinDistance - 1);
+  // }
 
   public int getbucketMinDistance() {
     return bucketMinDistance;

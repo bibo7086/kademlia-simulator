@@ -43,7 +43,9 @@ public class Util {
    * @return String
    */
   public static final String put0(BigInteger b) {
-    if (b == null) return null;
+    if (b == null) {
+      return null;
+    }
     String s = b.toString(2); // base 2
     while (s.length() < KademliaCommonConfig.BITS) {
       s = "0" + s;
@@ -78,10 +80,11 @@ public class Util {
 
   public static int xorDistance2(BigInteger a, BigInteger b) {
 
-    // BigInteger xorResult = a.xor(b);
-    // int distance = xorResult.intValue() & 0xFF;
-
     BigInteger xorResult = a.xor(b);
-    return xorResult.bitCount();
+    int distance = xorResult.intValue() & 0xFF;
+
+    return distance;
+    // BigInteger xorResult = a.xor(b);
+    // return xorResult.bitCount();
   }
 }

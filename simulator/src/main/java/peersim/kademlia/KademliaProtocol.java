@@ -90,6 +90,16 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
   /** LinkedHashMap containing logging information for find operations. */
   public LinkedHashMap<Long, OpLogging> findLog;
 
+  // Constants representing different find modes
+  /** Find mode using XOR distance and exact address */
+  public static final int FIND_XOR = 0;
+  /** Find mode solely using XOR distance */
+  public static final int FIND_DIST_XOR = 1;
+  /** Find mode using logarithmic distance and exact address */
+  public static final int FIND_LOG = 2;
+  /** Find mode soley using log distance */
+  public static final int FIND_DIST_LOG = 3;
+
   /**
    * Replicate this object by returning an identical copy. It is called by the initializer and do
    * not fill any particular field.
@@ -286,11 +296,11 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
           if (fop instanceof GetOperation) {
             request = new Message(Message.MSG_GET);
-          } else if (KademliaCommonConfig.FINDMODE == 0) {
+          } else if (KademliaCommonConfig.FINDMODE == FIND_XOR) {
             request = new Message(Message.MSG_FIND_XOR);
-          } else if (KademliaCommonConfig.FINDMODE == 1) {
+          } else if (KademliaCommonConfig.FINDMODE == FIND_DIST_XOR) {
             request = new Message(Message.MSG_FIND_DIST_XOR);
-          } else if (KademliaCommonConfig.FINDMODE == 2) {
+          } else if (KademliaCommonConfig.FINDMODE == FIND_LOG) {
             request = new Message(Message.MSG_FIND_LOG);
           } else {
             request = new Message(Message.MSG_FIND_DIST_LOG);
@@ -305,9 +315,13 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
               || request.getType() == Message.MSG_GET) {
             request.body = fop.getDestNode();
           } else if (KademliaCommonConfig.FINDMODE == 1) {
-            request.body = Util.xorDistance2(fop.getDestNode(), (BigInteger) fop.getBody());
+            request.body = Util.prefixLen(neighbour, (BigInteger) fop.getBody());
+            // Seems to be a bug
+            // request.body = Util.xorDistance2(fop.getDestNode(), (BigInteger) fop.getBody());
           } else if (KademliaCommonConfig.FINDMODE == 3) {
-            request.body = Util.logDistance(fop.getDestNode(), (BigInteger) fop.getBody());
+            request.body = Util.logDistance(neighbour, (BigInteger) fop.getBody());
+            // Seems to be a bug
+            // request.body = Util.logDistance(fop.getDestNode(), (BigInteger) fop.getBody());
           } else {
 
           }
@@ -406,23 +420,30 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
             + " for operation "
             + m.operationId);
     BigInteger[] neighbours = new BigInteger[KademliaCommonConfig.K];
-    // BigInteger[] neighbours2 = new BigInteger[KademliaCommonConfig.K];
 
     // Determine which neighbors to retrieve based on the type of message/mode
     // Retrieve the k nearest neighbors for the provided key
-    if (m.getType() == Message.MSG_FIND_XOR || m.getType() == Message.MSG_GET) {
-      neighbours = this.routingTable.getNeighboursXor((BigInteger) m.body, m.src.getId());
-    } else if (m.getType() == Message.MSG_FIND_DIST_XOR) {
-      neighbours = this.routingTable.getNeighboursDistXOR((int) m.body);
-    } else if (m.getType() == Message.MSG_FIND_LOG) {
-      neighbours = this.routingTable.getNeighboursLog((BigInteger) m.body, m.src.getId());
-    } else if (m.getType() == Message.MSG_FIND_DIST_LOG) {
-      // Retrieve the k neighbors within a distance range
-      neighbours = this.routingTable.getNeighboursDistLog((int) m.body);
-    } else {
-      // Invalid message type
-      return;
+    switch (m.getType()) {
+      case Message.MSG_FIND_XOR:
+      case Message.MSG_GET:
+        neighbours = this.routingTable.getNeighboursXor((BigInteger) m.body, m.src.getId());
+        break;
+      case Message.MSG_FIND_DIST_XOR:
+        neighbours = this.routingTable.getNeighboursDistXOR((int) m.body);
+        break;
+      case Message.MSG_FIND_LOG:
+        neighbours = this.routingTable.getNeighboursLog((BigInteger) m.body, m.src.getId());
+        break;
+      case Message.MSG_FIND_DIST_LOG:
+        neighbours = this.routingTable.getNeighboursDistLog((int) m.body);
+        break;
+      default:
+        return; // Invalid message type
     }
+
+    // for (BigInteger neighbor : neighbours) {
+    //   System.out.println("my neighbors are: " + neighbor);
+    // }
 
     // for (BigInteger neigh : neighbours) logger.warning("Neighbours " + neigh);
     // Create a response message containing the retrieved neighbours
@@ -481,20 +502,18 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     // Add the operation object to the find operation hash map
     findOp.put(fop.getId(), fop);
 
-    // the neigbors should depend on the type of operations. I think we should get the nodes based
-    // on the type of operation.
-
     BigInteger[] neighbours = null;
 
     // Retrieve the ALPHA (not really alpha should be k) closest nodes to the source node and add
-    // them to the
-    // find operation
-    if (KademliaCommonConfig.FINDMODE == 0 || KademliaCommonConfig.FINDMODE == 1) {
+    // them to the find operation
+    if (KademliaCommonConfig.FINDMODE == FIND_XOR
+        || KademliaCommonConfig.FINDMODE == FIND_DIST_XOR) {
       neighbours =
           this.routingTable.getNeighboursXor((BigInteger) m.body, this.getKademliaNode().getId());
     }
 
-    if (KademliaCommonConfig.FINDMODE == 2 || KademliaCommonConfig.FINDMODE == 3) {
+    if (KademliaCommonConfig.FINDMODE == FIND_LOG
+        || KademliaCommonConfig.FINDMODE == FIND_DIST_LOG) {
       neighbours =
           this.routingTable.getNeighboursLog((BigInteger) m.body, this.getKademliaNode().getId());
     }
@@ -508,8 +527,22 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     // Set the source of the message to the current node
     m.src = this.getKademliaNode();
 
+    // for (BigInteger neighbor : neighbours) {
+    //   System.out.println("my neighbors are: " + neighbor);
+    // }
+    // Check if the destination node has been found.
+    if (Arrays.asList(neighbours).contains(fop.getDestNode())) {
+      logger.warning("Found node " + fop.getDestNode());
+
+      // Complete the operation and log the result.
+      if (callback != null) {
+        callback.operationComplete(fop);
+      }
+      KademliaObserver.find_ok.add(1);
+      fop.setFinished(true);
+    }
     // Send ALPHA messages to the closest nodes
-    for (int i = 0; i < KademliaCommonConfig.ALPHA; i++) {
+    for (int i = 0; i < KademliaCommonConfig.ALPHA && !fop.isFinished(); i++) {
       BigInteger nextNode = fop.getNeighbour();
 
       if (nextNode != null) {
@@ -522,15 +555,14 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         // Set the type of the message depending on the find mode
         if (m.type == Message.MSG_INIT_GET) {
           m.type = Message.MSG_GET;
-        } else if (KademliaCommonConfig.FINDMODE == 0) {
+        } else if (KademliaCommonConfig.FINDMODE == FIND_XOR) {
           m.type = Message.MSG_FIND_XOR;
-        } else if (KademliaCommonConfig.FINDMODE == 1) {
+        } else if (KademliaCommonConfig.FINDMODE == FIND_DIST_XOR) {
           m.type = Message.MSG_FIND_DIST_XOR;
-          m.body = Util.xorDistance2(nextNode, (BigInteger) fop.getBody());
-
-        } else if (KademliaCommonConfig.FINDMODE == 2) {
+          m.body = Util.prefixLen(nextNode, (BigInteger) fop.getBody());
+          // m.body = Util.xorDistance2(nextNode, (BigInteger) fop.getBody());
+        } else if (KademliaCommonConfig.FINDMODE == FIND_LOG) {
           m.type = Message.MSG_FIND_LOG;
-
         } else {
           m.type = Message.MSG_FIND_DIST_LOG;
           m.body = Util.logDistance(nextNode, (BigInteger) fop.getBody());
@@ -547,6 +579,11 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         // }
         fop.nrHops++;
       }
+    }
+    if (fop.isFinished() && fop.getAvailableRequests() == KademliaCommonConfig.ALPHA) {
+      logger.warning("Operation completed. reporting...");
+      KademliaObserver.reportOperation(fop);
+      findOp.remove(fop.getId());
     }
     // Return a reference to the created operation object
     return fop;
@@ -753,7 +790,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     logger.setUseParentHandlers(false);
 
     // Set the logger's level to WARNING
-    logger.setLevel(Level.INFO);
+    logger.setLevel(Level.ALL);
     // logger.setLevel(Level.ALL);
 
     // Create a console handler for the logger

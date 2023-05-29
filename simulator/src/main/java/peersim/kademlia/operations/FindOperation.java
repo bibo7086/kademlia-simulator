@@ -114,13 +114,14 @@ public class FindOperation extends Operation {
   }
 
   /**
-   * get the first neighbour in closest set which has not been already queried
+   * Get the first neighbor in the closest set that has not been already queried.
    *
-   * @return the Id of the node or null if there aren't available node
+   * @return the ID of the node or null if there are no available nodes
    */
   public BigInteger getNeighbour() {
-    // find closest neighbour ( the first not already queried)
+    // Find closest neighbor (the first not already queried)
     BigInteger res = null;
+
     for (BigInteger n : closestSet.keySet()) {
       if (n != null && closestSet.get(n) == false) {
         if (res == null) {
@@ -131,12 +132,11 @@ public class FindOperation extends Operation {
       }
     }
 
-    // Has been found a valid neighbour
+    // Check if a valid neighbor has been found
     if (res != null) {
       closestSet.remove(res);
       closestSet.put(res, true);
-      // increaseUsed(res);
-      available_requests--; // decrease available request
+      available_requests--; // Decrease available requests
     }
 
     return res;
