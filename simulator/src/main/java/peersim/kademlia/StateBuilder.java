@@ -1,5 +1,6 @@
 package peersim.kademlia;
 
+import java.math.BigInteger;
 import java.util.Comparator;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
@@ -108,30 +109,32 @@ public class StateBuilder implements peersim.core.Control {
       }
     }
 
-    // Add 50 nearby nodes to each node's k-bucket
+    // Add 50 nearby nodes to each node's k-bucket based on proximity to ID
     for (int i = 0; i < sz; i++) {
       Node iNode = Network.get(i);
       KademliaProtocol iKad = (KademliaProtocol) (iNode.getProtocol(kademliaid));
+      BigInteger iNodeId = iKad.getKademliaNode().getId();
 
-      int start = i;
-      if (i > sz - 50) {
+      int start = i + 1;
+      if (start > sz - 50) {
         start = sz - 25;
       }
       for (int k = 0; k < 50; k++) {
         start++;
-        // The line start = start++; will not increment the start value because the
-        // post increment operator (++) returns the original value before incrementing.
-        // This line should be changed to start++; to correctly increment the start value.
-        if (start > 0 && start < sz) {
-          // Likewise, here, the pre increment operator should be used instead.
-          // this will ensure that the correct node is retrieved from the network and assigned to
-          // jkad
+        if (start < sz) {
           KademliaProtocol jKad = (KademliaProtocol) (Network.get(start).getProtocol(kademliaid));
-          iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
+          BigInteger jNodeId = jKad.getKademliaNode().getId();
+          if (!jNodeId.equals(iNodeId)) {
+            iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
+            System.out.println(
+                "I am "
+                    + iKad.getKademliaNode().getId()
+                    + " adding "
+                    + jKad.getKademliaNode().getId());
+          }
         }
       }
     }
-
     return false;
   } // end execute()
 }

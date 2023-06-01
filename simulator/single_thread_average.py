@@ -96,7 +96,6 @@ def run_sim(config_file, size, seed, find_mode):
         os.system(f"java -Xmx200000m -cp ./lib/djep-1.0.0.jar:lib/jep-2.3.0.jar:target/service-discovery-1.0-SNAPSHOT.jar:lib/gs-core-2.0.jar:lib/pherd-1.0.jar:lib/mbox2-1.0.jar:lib/gs-ui-swing-2.0.jar -ea peersim.Simulator {config_copy} > /dev/null 2> /dev/null")
         
   
-
         # Move the generated CSV files to the log directory
         log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)

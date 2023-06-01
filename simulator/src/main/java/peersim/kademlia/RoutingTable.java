@@ -76,9 +76,9 @@ public class RoutingTable implements Cloneable {
   public void removeNeighbour(BigInteger node) {
 
     if (findMode == 0 || findMode == 1) {
-      // get the lenght of the longest common prefix (correspond to the correct k-bucket)
+      // Get the lenght of the longest common prefix (corresponding to the correct k-bucket)
       int prefix_len = Util.prefixLen(nodeId, node);
-      // add the node to the k-bucket
+      // Add the node to the k-bucket
       k_buckets.get(prefix_len).removeNeighbour(node);
     } else {
       // Remove the node from the k-bucket
@@ -191,46 +191,6 @@ public class RoutingTable implements Cloneable {
     // Convert the resultList to an array and return it
     return resultList.toArray(result);
   }
-
-  //   /**
-  //  * Retrieves the neighbors using the distance XOR metric.
-  //  *
-  //  * @param distance the distance representing the prefix lenght at which to retreive the
-  // neigbors
-  //  * @return an array of BigInteger representing the neighbors
-  //  */
-  // public BigInteger[] getNeighboursDistXOR2(final BigInteger distance) {
-  //   // Resulting neighbors
-  //   BigInteger[] result = new BigInteger[0];
-
-  //   // Neighbor candidates
-  //   ArrayList<BigInteger> resultList = new ArrayList<BigInteger>();
-
-  //   // Add neighbors at the given distance
-  //   resultList.addAll(bucketAtDistanceXOR(distance).neighbours.keySet());
-
-  //   if (resultList.size() < k && (distance + 1) <= 256) {
-  //     // Add neighbors at the next distance
-  //     resultList.addAll(bucketAtDistanceXOR(distance + 1).neighbours.keySet());
-  //     // Remove excess neighbors until the size is <= k
-  //     while (resultList.size() > k) {
-  //       resultList.remove(resultList.size() - 1);
-  //     }
-  //   }
-
-  //   // Add neighbors at the previous distance
-  //   if (resultList.size() < k && (distance - 1) >= 0) {
-  //     resultList.addAll(bucketAtDistanceXOR(distance - 1).neighbours.keySet());
-
-  //     // Remove excess neighbors until the size is <= k
-  //     while (resultList.size() > k) {
-  //       resultList.remove(resultList.size() - 1);
-  //     }
-  //   }
-
-  //   // Convert the resultList to an array and return it
-  //   return resultList.toArray(result);
-  // }
 
   /**
    * Return the closest neighbour to a key from the correct k-bucket using the log distance.
@@ -441,14 +401,6 @@ public class RoutingTable implements Cloneable {
 
     return k_buckets.get(distance - bucketMinDistance - 1);
   }
-
-  // protected KBucket bucketAtDistanceXOR(int distance) {
-  //   if (distance <= bucketMinDistance) {
-  //     return k_buckets.get(0);
-  //   }
-
-  //   return k_buckets.get(distance - bucketMinDistance - 1);
-  // }
 
   public int getbucketMinDistance() {
     return bucketMinDistance;

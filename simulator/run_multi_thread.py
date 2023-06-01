@@ -36,9 +36,15 @@ def run_sim(config_file, size, seed, find_mode, lock):
         # Get the base name of the config file 
         config_basename = os.path.basename(config_file)
 
-        # Generate a unique name for the copied config file 
+        # Create a separate directory for each configuration
+        config_name = os.path.splitext(os.path.basename(config_file))[0]
+        output_dir_config = os.path.join(output_dir, config_name)
+        os.makedirs(output_dir_config, exist_ok=True)
+
+        # Generate a unique name for the to be copied config file 
         unique_name = f"{size}_{find_mode}"
-        config_copy = os.path.join(os.path.dirname(config_file), f"{os.path.splitext(config_basename)[0]}_{unique_name}.cfg")
+        # config_copy = os.path.join(os.path.dirname(output_dir_config), f"{os.path.splitext(config_basename)[0]}_{unique_name}.cfg")
+        config_copy = os.path.join(output_dir_config, f"{os.path.splitext(config_basename)[0]}_{unique_name}.cfg")
 
         # Create a separate copy of the config file for this simulation
         shutil.copy(config_file, config_copy)
@@ -48,20 +54,15 @@ def run_sim(config_file, size, seed, find_mode, lock):
         change_key(config_copy, "random.seed", seed)
         change_key(config_copy, "FINDMODE", find_mode)
 
-        # Create a separate directory for each configuration
-        config_name = os.path.splitext(os.path.basename(config_file))[0]
-        output_dir_config = os.path.join(output_dir, config_name)
-        os.makedirs(output_dir_config, exist_ok=True)
+        # # Move the config file to the output directory
+        # shutil.move(config_copy, output_dir_config)
 
-        # Move the config file to the output directory
-        shutil.move(config_copy, output_dir_config)
-
-        # Acquire lock to ensure exclusive access to the log folder
-        lock.acquire()
 
         # Run the simulation
         os.system(f"java -Xmx200000m -cp ./lib/djep-1.0.0.jar:lib/jep-2.3.0.jar:target/service-discovery-1.0-SNAPSHOT.jar:lib/gs-core-2.0.jar:lib/pherd-1.0.jar:lib/mbox2-1.0.jar:lib/gs-ui-swing-2.0.jar -ea peersim.Simulator {config_file} > /dev/null 2> /dev/null")
-
+       
+        # Acquire lock to ensure exclusive access to the log folder
+        # lock.acquire()
         # Move the generated CSV files to the appropriate log directory
         log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
@@ -71,7 +72,7 @@ def run_sim(config_file, size, seed, find_mode, lock):
         print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
         
         # Release the lock
-        lock.release()
+        # lock.release()
 
     except Exception as e:
         print("Error occurred during simulation:", e)

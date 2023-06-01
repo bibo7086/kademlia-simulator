@@ -60,7 +60,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
   /** Identifier for the tranport protocol (used in the sendMessage method). */
   private int tid;
 
-  /** Unique ID for this Kademlia node/network - TODO: verify!!!. */
+  /** Unique ID for this Kademlia node/network. */
   private int kademliaid;
 
   /** Indicates if the service initializer has already been called. */
@@ -441,10 +441,6 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         return; // Invalid message type
     }
 
-    // for (BigInteger neighbor : neighbours) {
-    //   System.out.println("my neighbors are: " + neighbor);
-    // }
-
     // for (BigInteger neigh : neighbours) logger.warning("Neighbours " + neigh);
     // Create a response message containing the retrieved neighbours
     Message response = new Message(Message.MSG_RESPONSE, neighbours);
@@ -459,7 +455,6 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     }
 
     // Send the response message containing the neighbours (and optional value) back to the sender
-    // node
     sendMessage(response, m.src.getId(), myPid);
   }
 
@@ -527,22 +522,8 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     // Set the source of the message to the current node
     m.src = this.getKademliaNode();
 
-    // for (BigInteger neighbor : neighbours) {
-    //   System.out.println("my neighbors are: " + neighbor);
-    // }
-    // Check if the destination node has been found.
-    if (Arrays.asList(neighbours).contains(fop.getDestNode())) {
-      logger.warning("Found node " + fop.getDestNode());
-
-      // Complete the operation and log the result.
-      if (callback != null) {
-        callback.operationComplete(fop);
-      }
-      KademliaObserver.find_ok.add(1);
-      fop.setFinished(true);
-    }
     // Send ALPHA messages to the closest nodes
-    for (int i = 0; i < KademliaCommonConfig.ALPHA && !fop.isFinished(); i++) {
+    for (int i = 0; i < KademliaCommonConfig.ALPHA; i++) {
       BigInteger nextNode = fop.getNeighbour();
 
       if (nextNode != null) {
@@ -580,11 +561,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
         fop.nrHops++;
       }
     }
-    if (fop.isFinished() && fop.getAvailableRequests() == KademliaCommonConfig.ALPHA) {
-      logger.warning("Operation completed. reporting...");
-      KademliaObserver.reportOperation(fop);
-      findOp.remove(fop.getId());
-    }
+
     // Return a reference to the created operation object
     return fop;
   }
@@ -790,7 +767,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     logger.setUseParentHandlers(false);
 
     // Set the logger's level to WARNING
-    logger.setLevel(Level.ALL);
+    logger.setLevel(Level.OFF);
     // logger.setLevel(Level.ALL);
 
     // Create a console handler for the logger

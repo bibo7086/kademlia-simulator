@@ -172,13 +172,9 @@ public class KademliaObserver implements Control {
     // Write find operations log to file if not empty
     if (!find_log.isEmpty()) {
       writeMapFind(find_log, logFolderName + "/" + "operation.csv");
-      // System.out.println(
-      //     "The average hope and latency " + hopStore.getAverage() + ", " +
-      // timeStore.getAverage());
     }
 
     // Write the count data to the "count"file
-
     try (FileWriter countWriter = new FileWriter(logFolderName + "/" + "count.csv")) {
       // Write the count data to the "count" file
       String countHeader = "message_count,find_op,find_ok\n";
@@ -207,19 +203,6 @@ public class KademliaObserver implements Control {
     }
 
     System.gc();
-    String s =
-        String.format(
-            "[time=%d]:[N=%d current nodes UP] [D=%f msg deliv] [%f min h] [%f average h] [%f max h] [%d min l] [%d msec average l] [%d max l] [%d find msg sent]",
-            CommonState.getTime(),
-            sz,
-            msg_deliv.getSum(),
-            hopStore.getMin(),
-            hopStore.getAverage(),
-            hopStore.getMax(),
-            (int) timeStore.getMin(),
-            (int) timeStore.getAverage(),
-            (int) timeStore.getMax(),
-            (int) find_op.getSum());
 
     // Check if this is the last execution cycle of the experiment
     if (CommonState.getEndTime() <= (observerStep + CommonState.getTime())) {
@@ -253,12 +236,6 @@ public class KademliaObserver implements Control {
    * @param op The operation to report.
    */
   public static void reportOperation(Operation op) {
-    // Operations without a source are control messages sent by the traffic control,
-    // so we don't want to log them.
-    /*if (fLog.src == null) {
-      return;
-    }
-    find_log.put(String.valueOf(fLog.id), fLog.toMap());*/
 
     // Calculate the operation stop time and then add the opearation to the find operation log.
     op.setStopTime(CommonState.getTime() - op.getTimestamp());
