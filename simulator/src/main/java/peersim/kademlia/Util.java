@@ -18,14 +18,18 @@ public class Util {
    * @param b2 BigInteger
    * @return int
    */
-  public static final int prefixLen(BigInteger b1, BigInteger b2) {
-    BigInteger xor = b1.xor(b2);
-    int prefixLen = 0;
-    while (!xor.testBit(prefixLen) && prefixLen < xor.bitLength()) {
-      prefixLen++;
+  public static int prefixLen(BigInteger b1, BigInteger b2) {
+    String s1 = put0(b1);
+    String s2 = put0(b2);
+
+    int i = 0;
+    for (i = 0; i < s1.length(); i++) {
+      if (s1.charAt(i) != s2.charAt(i)) return i;
     }
-    return prefixLen;
+
+    return i;
   }
+
   /**
    * return the distance between two number which is defined as (a XOR b)
    *
@@ -36,23 +40,24 @@ public class Util {
    */
 
   /**
-   * convert a BigInteger into a String (base 2) and lead all needed non-significative zeroes in
-   * order to reach the canonical length of a nodeid
+   * Convert a BigInteger into a String (base 2) and lead all needed non-significant zeroes in order
+   * to reach the canonical length of a nodeid
    *
    * @param b BigInteger
    * @return String
    */
-  public static final String put0(BigInteger b) {
-    if (b == null) {
-      return null;
-    }
+  public static String put0(BigInteger b) {
+    if (b == null) return null;
+
     String s = b.toString(2); // base 2
-    while (s.length() < KademliaCommonConfig.BITS) {
+    int canonicalLength = KademliaCommonConfig.BITS;
+
+    while (s.length() < canonicalLength) {
       s = "0" + s;
     }
+
     return s;
   }
-
   /**
    * Measures the log-distance between two BigInteger values using the length of the differing
    * suffix in bits

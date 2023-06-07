@@ -126,11 +126,11 @@ public class StateBuilder implements peersim.core.Control {
           BigInteger jNodeId = jKad.getKademliaNode().getId();
           if (!jNodeId.equals(iNodeId)) {
             iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
-            System.out.println(
-                "I am "
-                    + iKad.getKademliaNode().getId()
-                    + " adding "
-                    + jKad.getKademliaNode().getId());
+            // System.out.println(
+            //     "I am "
+            //         + iKad.getKademliaNode().getId()
+            //         + " adding "
+            //         + jKad.getKademliaNode().getId());
           }
         }
       }

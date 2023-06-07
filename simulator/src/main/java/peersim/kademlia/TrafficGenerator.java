@@ -46,9 +46,6 @@ public class TrafficGenerator implements Control {
     }
     BigInteger dst = ((KademliaProtocol) (n.getProtocol(pid))).getKademliaNode().getId();
 
-    // dst =
-    //     new BigInteger(
-    //         "70987251059937106302777755060552859513783347326599989320237112584485870950574");
     Message m = Message.makeInitFindNode(dst);
     m.timestamp = CommonState.getTime();
 
