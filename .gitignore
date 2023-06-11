@@ -1,6 +1,32 @@
+# OS generated files #
+######################
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Latex #
+######################
+*.aux
+*.dvi
+*.log
+*.synctex.gz
+*.toc
+*.out
+*.ilg
+*.fdb_latexmk
+*.latexmain
+*.snm
+*.nav
+
+# Logs and other unnecessary files/folders #
+#########################
 target/
 logs/
 output/
 .vscode/
 *.code-workspace
+
