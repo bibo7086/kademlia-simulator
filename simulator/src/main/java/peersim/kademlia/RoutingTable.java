@@ -322,8 +322,8 @@ public class RoutingTable implements Cloneable {
       sb.append(k_buckets.get(i).getNeighborCount()).append("\n");
 
       // Uncomment to print all the elements in this k-bucket (row)
-      KBucket kBucket = k_buckets.get(i);
-      sb.append(kBucket.toString()).append("\n");
+      // KBucket kBucket = k_buckets.get(i);
+      // sb.append(kBucket.toString()).append("\n");
     }
 
     return sb.toString();

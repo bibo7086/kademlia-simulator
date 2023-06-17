@@ -1,7 +1,11 @@
 package peersim.kademlia;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Network;
@@ -126,14 +130,52 @@ public class StateBuilder implements peersim.core.Control {
           BigInteger jNodeId = jKad.getKademliaNode().getId();
           if (!jNodeId.equals(iNodeId)) {
             iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
-            // System.out.println(
-            //     "I am "
-            //         + iKad.getKademliaNode().getId()
-            //         + " adding "
-            //         + jKad.getKademliaNode().getId());
           }
         }
       }
+    }
+
+    // Filepath to write the routing table
+    String filePath = "./logs/routingtable.csv";
+
+    // Create a Filewriter object to write to the file
+    try (FileWriter fileWriter = new FileWriter(filePath)) {
+      fileWriter.write("Initial state of the routing table\n");
+
+      List<Node> selectedNodes = new ArrayList<>();
+      // Randomly choose 3 nodes
+      // for (int i = 0; i < 3; i++) {
+      //   int randomIndex = CommonState.r.nextInt(sz);
+      //   Node selectedNode = Network.get(randomIndex);
+      //   selectedNodes.add(selectedNode);
+      // }
+
+      // Choose the first node from the beginning
+      Node firstNode = Network.get(0);
+      selectedNodes.add(firstNode);
+
+      // Choose the node from the middle
+      int middleIndex = sz / 2; // Index of the middle node
+      Node middleNode = Network.get(middleIndex);
+      selectedNodes.add(middleNode);
+
+      // Choose the last node form the end
+      Node lastNode = Network.get(sz - 1);
+      selectedNodes.add(lastNode);
+
+      // Iterate over the selected nodes
+      for (Node node : selectedNodes) {
+
+        KademliaProtocol randomNodeKademliaProtocol =
+            (KademliaProtocol) node.getProtocol(kademliaid);
+        // BigInteger randomNodeId = randomNodeKademliaProtocol.getKademliaNode().getId();
+        RoutingTable routingTable = randomNodeKademliaProtocol.getRoutingTable();
+        String routingTableString = routingTable.generateRoutingTableString();
+
+        fileWriter.write(routingTableString);
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
     }
     return false;
   } // end execute()

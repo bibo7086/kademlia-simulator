@@ -16,20 +16,13 @@ node_sizes = {
     # 5000: 654654, 
 }
 
-find_modes = [0, 1, 2, 3]
+find_modes = [0, 1 , 2, 3]
 
-config_files = [
-    r'c:\Users\addr777\OneDrive - City, University of London\Documents\Development\City\kademlia-simulator\simulator\config\kademlia.cfg'
-]
+config_files = ['.\\config\\kademlia.cfg']
 
-output_dir = r'c:\Users\addr777\OneDrive - City, University of London\Documents\Development\City\kademlia-simulator\simulator\output'
-
-log_dir = r'c:\Users\addr777\OneDrive - City, University of London\Documents\Development\City\kademlia-simulator\simulator\logs'
-
-base_path = r'c:\Users\addr777\OneDrive - City, University of London\Documents\Development\City\kademlia-simulator\simulator'
-
-test_path = r'c:\Users\addr777\OneDrive - City, University of London\Documents\Development\City\kademlia-simulator\simulator\logs'
-
+output_dir = '.\\output'
+log_dir = '.\\logs'
+base_path = '.\\'
 
 jar_paths = [
     os.path.join(base_path, 'lib', 'djep-1.0.0.jar'),
