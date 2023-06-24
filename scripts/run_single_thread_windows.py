@@ -18,11 +18,10 @@ node_sizes = {
 
 find_modes = [0, 1 , 2, 3]
 
-config_files = ['.\\config\\kademlia.cfg']
-
-output_dir = '.\\output'
-log_dir = '.\\logs'
-base_path = '.\\'
+config_files = ['..\\simulator\\config\\kademlia.cfg'] # List of config file paths
+output_dir = '..\\simulator\\output' # Output directory path
+log_dir = '..\\simulator\\logs' # Log directory path
+base_path = '..\\simulator'
 
 jar_paths = [
     os.path.join(base_path, 'lib', 'djep-1.0.0.jar'),
@@ -77,9 +76,10 @@ def run_sim(config_file, size, seed, find_mode):
         log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
 
-        shutil.move(os.path.join(test_path, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
-        shutil.move(os.path.join(test_path, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
-        shutil.move(os.path.join(test_path, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'routingtable.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}.csv"))
 
         print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
 
