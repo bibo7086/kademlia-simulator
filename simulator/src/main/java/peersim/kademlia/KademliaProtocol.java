@@ -214,7 +214,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
   /**
    * Gets the node associated with this Kademlia protocol instance by calling nodeIdtoNode method
-   * with the ID of this KademliaNode. TODO: verify.
+   * with the ID of this KademliaNode.
    *
    * @return the node associated with this Kademlia protocol instance,
    */

@@ -2,7 +2,6 @@ package peersim.kademlia;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -25,6 +24,8 @@ public class StateBuilder implements peersim.core.Control {
 
   private static final String PAR_PROT = "protocol";
   private static final String PAR_TRANSPORT = "transport";
+  private static final double PARETO_ALPHA = 0.18;
+  private static final double PARETO_XM = 1.0;
 
   private String prefix;
   private int kademliaid;
@@ -71,6 +72,51 @@ public class StateBuilder implements peersim.core.Control {
     System.out.println(o);
   }
 
+  private int[] generateParetoDistribution(int count, double alpha, double xm, double xFull) {
+    double step = 10.0 / count;
+    double[] distribution = new double[count];
+    List<Double> reverseCdf = new ArrayList<>();
+
+    double y = 0.0;
+    boolean xFullReached = false;
+
+    while (y < 1) {
+      if (xFullReached) {
+        reverseCdf.add(xFull);
+      } else {
+        double nextX = paretoCdfReversed(y, alpha, xm);
+        if (nextX > xFull) {
+          xFullReached = true;
+          reverseCdf.add(xFull);
+        } else {
+          reverseCdf.add(nextX);
+        }
+      }
+      y += step;
+    }
+
+    int[] res = new int[count];
+    int index = 0;
+    for (int i = 0; i < count; i++) {
+      if (index < reverseCdf.size()) {
+        distribution[i] = reverseCdf.get(index);
+        index++;
+      } else {
+        // If reverseCdf is smaller than count, fill remaining distribution values with xFull
+        distribution[i] = xFull;
+      }
+      double calculatedValue = distribution[i] * count * 1000 / (xFull * count);
+      int roundedValue = (int) Math.round(calculatedValue);
+      res[i] = roundedValue;
+    }
+
+    return res;
+  }
+
+  private double paretoCdfReversed(double y, double alpha, double xm) {
+    return xm / Math.pow(1 - y, 1 / alpha);
+  }
+
   /**
    * Executes the Kademlia network by sorting the nodes in ascending order of nodeID, and randomly
    * adding 100 (not the 50 mentioned in the previous comment) nodes to each node's k-bucket. Then
@@ -101,37 +147,18 @@ public class StateBuilder implements peersim.core.Control {
         });
 
     int sz = Network.size();
-    // For every node, add 100 random nodes to its k-bucket - not sure why this was 50 previously...
+    // For every node, add peercount random nodes to its k-bucket
+    int[] peerDistribution = generateParetoDistribution(sz, PARETO_ALPHA, PARETO_XM, 240.0);
+
     for (int i = 0; i < sz; i++) {
       Node iNode = Network.get(i);
       KademliaProtocol iKad = (KademliaProtocol) (iNode.getProtocol(kademliaid));
-
-      for (int k = 0; k < 100; k++) {
+      int peerCount = peerDistribution[i];
+      // System.out.println("the peercount is: " + peerCount);
+      for (int k = 0; k < peerCount; k++) {
         KademliaProtocol jKad =
             (KademliaProtocol) (Network.get(CommonState.r.nextInt(sz)).getProtocol(kademliaid));
         iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
-      }
-    }
-
-    // Add 50 nearby nodes to each node's k-bucket based on proximity to ID
-    for (int i = 0; i < sz; i++) {
-      Node iNode = Network.get(i);
-      KademliaProtocol iKad = (KademliaProtocol) (iNode.getProtocol(kademliaid));
-      BigInteger iNodeId = iKad.getKademliaNode().getId();
-
-      int start = i + 1;
-      if (start > sz - 50) {
-        start = sz - 25;
-      }
-      for (int k = 0; k < 50; k++) {
-        start++;
-        if (start < sz) {
-          KademliaProtocol jKad = (KademliaProtocol) (Network.get(start).getProtocol(kademliaid));
-          BigInteger jNodeId = jKad.getKademliaNode().getId();
-          if (!jNodeId.equals(iNodeId)) {
-            iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
-          }
-        }
       }
     }
 

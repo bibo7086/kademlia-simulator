@@ -109,6 +109,24 @@ public class RoutingTable implements Cloneable {
       return bucketAtDistancexor(prefixLen).neighbours.keySet().toArray(result);
     }
 
+    // // Otherwise get get k closest nodes from closer buckets - Another - non working
+    // implementation
+    // int currentRadius = 0;
+    // int topBucket = prefixLen + currentRadius;
+    // int bottomBucket = prefixLen - currentRadius;
+
+    // while (neighbour_candidates.size() < KademliaCommonConfig.K) {
+    //   if (topBucket <= KademliaCommonConfig.BITS) {
+    //     neighbour_candidates.addAll(bucketAtDistancexor(topBucket).neighbours.keySet());
+    //   }
+    //   if (bottomBucket >= 0 && bottomBucket != topBucket) {
+    //     neighbour_candidates.addAll(bucketAtDistancexor(bottomBucket).neighbours.keySet());
+    //   }
+    //   currentRadius++;
+    //   topBucket = prefixLen + currentRadius;
+    //   bottomBucket = prefixLen - currentRadius;
+    // }
+
     // Otherwise get k closest nodes from all k-buckets
     prefixLen = 0;
     while (prefixLen < KademliaCommonConfig.BITS) {
@@ -265,25 +283,25 @@ public class RoutingTable implements Cloneable {
     // Add neighbors at the given distance
     resultList.addAll(bucketAtDistance(dist).neighbours.keySet());
 
-    if (resultList.size() < k && dist + 1 <= 256) {
-      // Add neighbors at the next distance
-      resultList.addAll(bucketAtDistance(dist + 1).neighbours.keySet());
-    }
+    // if (resultList.size() < k && dist + 1 <= 256) {
+    //   // Add neighbors at the next distance
+    //   resultList.addAll(bucketAtDistance(dist + 1).neighbours.keySet());
+    // }
 
-    if (resultList.size() < k && dist - 1 >= 0) {
-      // Add neighbors at the previous distance
-      resultList.addAll(bucketAtDistance(dist - 1).neighbours.keySet());
-    }
+    // if (resultList.size() < k && dist - 1 >= 0) {
+    //   // Add neighbors at the previous distance
+    //   resultList.addAll(bucketAtDistance(dist - 1).neighbours.keySet());
+    // }
 
     // // Trim excess neighbors if the list exceeds k
     // while (resultList.size() > k) {
     //   resultList.remove(resultList.size() - 1);
     // }
 
-    // Trim excess neighbors if the list exceeds k
-    if (resultList.size() > k) {
-      resultList = resultList.subList(0, k);
-    }
+    // // Trim excess neighbors if the list exceeds k
+    // if (resultList.size() > k) {
+    //   resultList = resultList.subList(0, k);
+    // }
 
     // Convert the resultList to an array and return it
     return resultList.toArray(new BigInteger[0]);
@@ -353,6 +371,7 @@ public class RoutingTable implements Cloneable {
   protected KBucket bucketAtDistancexor(int distance) {
 
     distance = KademliaCommonConfig.BITS - distance;
+
     if (distance <= bucketMinDistance) {
       return k_buckets.get(0);
     }
