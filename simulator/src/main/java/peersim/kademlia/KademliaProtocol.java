@@ -214,7 +214,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
 
   /**
    * Gets the node associated with this Kademlia protocol instance by calling nodeIdtoNode method
-   * with the ID of this KademliaNode. TODO: verify.
+   * with the ID of this KademliaNode.
    *
    * @return the node associated with this Kademlia protocol instance,
    */
@@ -618,7 +618,7 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
    * Handles the receiving of events by the peersim framework.
    *
    * @param myNode the current node receiving the event.
-   * @param myPid the process ID of the current node. (TODO: verify!!!)
+   * @param myPid the process ID of the current node.
    * @param event the event being received by the current node.
    */
   public void processEvent(Node myNode, int myPid, Object event) {
