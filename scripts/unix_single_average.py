@@ -4,7 +4,7 @@ import csv
 
 # Configuration parameters
 node_sizes = {
-    # 128: 123456789,
+    128: 123456789,
     # 256: 67890,
     # 512: 45678,
     # 1024: 98765,
@@ -13,12 +13,10 @@ node_sizes = {
     # 8192: 13579,
     # 16384: 55555,
     # 32768: 88888,
-    # 65536: 22222,
-    10000: 319132, 
-
+    # 65536: 22222
 }
 
-find_modes = [3]  # List of find modes
+find_modes = [0, 1, 2, 3]  # List of find modes
 
 config_files = ["../simulator/config/kademlia.cfg"] # List of config file paths
 output_dir = "../simulator/output/"  # Output directory path
@@ -131,7 +129,6 @@ def main():
             for size, seed in node_sizes.items():
                 print("Running", config_file, "with size", size, "seed", seed, "find mode", find_mode)
                 run_sim(config_file, size, seed, find_mode)
-
 
 if __name__ == '__main__':
     main()

@@ -4,7 +4,7 @@ import csv
 
 # Configuration parameters
 node_sizes = {
-    # 128: 123456789,
+    128: 123456789,
     # 256: 67890,
     # 512: 45678,
     # 1024: 98765,
@@ -15,7 +15,7 @@ node_sizes = {
     # 32768: 88888,
     # 65536: 22222, 
     # 5000: 654654, 
-    10000: 319132, 
+    # 10000: 319132, 
 
 }
 
@@ -140,7 +140,6 @@ def main() -> int:
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
 
-  
     # traffic_steps = [36, 18, 9, 4.5, 3.6]
     # observer_steps = [35, 17, 8, 4.4, 3.5]
 
@@ -148,7 +147,7 @@ def main() -> int:
         for size, seed in node_sizes.items():
             # for i in range(len(traffic_steps)):
                 for find_mode in find_modes:
-                    # Uncomment to put the change the traffic step 
+                    # Uncomment to change the traffic step 
                     # print("Running", config_file, "with size", size, "seed", seed, "find mode", find_mode, "traffic step", traffic_steps[i])
 
                     # # Update the traffic step and observer step

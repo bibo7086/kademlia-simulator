@@ -152,21 +152,31 @@ class ClassFinder {
    * @throws IOException
    */
   private static void findClassInJar(Map<String, String> map, File pathFile) throws IOException {
-    ZipFile zipFile = new ZipFile(pathFile);
-    Enumeration entries = zipFile.entries();
-    while (entries.hasMoreElements()) {
-
-      String entry = entries.nextElement().toString();
-      if (entry.endsWith(".class")) {
-        // File names in ZIP archives (so, also in JARs)
-        // are separated by forward slashes '/', independently
-        // of the architecture.
-        String className = classname(entry, "/");
-        String shortName = getShortName(className);
-        if (map.containsKey(shortName)) {
-          map.put(shortName, map.get(shortName) + "," + className);
-        } else {
-          map.put(shortName, className);
+    ZipFile zipFile = null;
+    try {
+      zipFile = new ZipFile(pathFile);
+      Enumeration entries = zipFile.entries();
+      while (entries.hasMoreElements()) {
+        String entry = entries.nextElement().toString();
+        if (entry.endsWith(".class")) {
+          // File names in ZIP archives (so, also in JARs)
+          // are separated by forward slashes '/', independently
+          // of the architecture.
+          String className = classname(entry, "/");
+          String shortName = getShortName(className);
+          if (map.containsKey(shortName)) {
+            map.put(shortName, map.get(shortName) + "," + className);
+          } else {
+            map.put(shortName, className);
+          }
+        }
+      }
+    } finally {
+      if (zipFile != null) {
+        try {
+          zipFile.close();
+        } catch (IOException e) {
+          // Handle exception when closing the ZipFile
         }
       }
     }

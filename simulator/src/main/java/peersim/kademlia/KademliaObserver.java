@@ -3,15 +3,14 @@ package peersim.kademlia;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Control;
 import peersim.core.Network;
-import peersim.core.Node;
 import peersim.kademlia.operations.Operation;
 import peersim.util.IncrementalStats;
 
@@ -27,23 +26,26 @@ public class KademliaObserver implements Control {
   /** Configuration strings to read */
   private static final String PAR_STEP = "step";
 
-  /** keep statistics of the number of hops of every message delivered. */
+  /** The parameter name for FINDMODE. */
+  private static final String PAR_TRAFFIC_STEP = "trafficStep";
+
+  /** Keep statistics of the number of hops of every message delivered. */
   public static IncrementalStats hopStore = new IncrementalStats();
 
   /** keep statistics of the time every message delivered. */
   public static IncrementalStats timeStore = new IncrementalStats();
 
-  /** keep statistic of number of message delivered */
+  /** Keep statistic of number of message delivered */
   public static IncrementalStats msg_deliv = new IncrementalStats();
 
-  /** keep statistic of number of find operation */
+  /** Keep statistic of number of initiated find operations */
   public static IncrementalStats find_op = new IncrementalStats();
+
+  /** Keep statistics of successful find operations */
+  public static IncrementalStats find_ok = new IncrementalStats();
 
   /** Parameter of the protocol we want to observe */
   private static final String PAR_PROT = "protocol";
-
-  /** Successfull find operations */
-  public static IncrementalStats find_ok = new IncrementalStats();
 
   /** Messages exchanged in the Kademlia network */
   private static HashMap<String, Map<String, Object>> messages =
@@ -59,7 +61,22 @@ public class KademliaObserver implements Control {
   /** The time granularity of reporting metrics */
   private static int observerStep;
 
-  private int kademliaid;
+  /** The time granularity of traffic generation */
+  private static int trafficStep;
+
+  /** The number of nodes in the simulation */
+  private static int size;
+
+  /** Maximum size in number of message entries */
+  private static final int MAX_MESSAGE = 10000;
+
+  private static int accumulatedMessageCount = 0;
+
+  /** Collection to track written message IDs */
+  private static Set<String> writtenMessages = new LinkedHashSet<>();
+
+  /** Collection to track written operation IDs */
+  private static Set<String> writtenOperations = new LinkedHashSet<>();
 
   /**
    * Constructor to initialize the observer.
@@ -68,7 +85,8 @@ public class KademliaObserver implements Control {
    */
   public KademliaObserver(String prefix) {
     observerStep = Configuration.getInt(prefix + "." + PAR_STEP);
-    kademliaid = Configuration.getPid(prefix + "." + PAR_PROT);
+    trafficStep = Configuration.getInt(prefix + "." + PAR_TRAFFIC_STEP);
+    size = Network.size();
     logFolderName = "./logs";
   }
 
@@ -79,34 +97,25 @@ public class KademliaObserver implements Control {
    * @param filename the name of the file to write to
    */
   private static void writeMap(Map<String, Map<String, Object>> map, String filename) {
-    try (FileWriter writer = new FileWriter(filename)) {
-      // Set<String> keySet = map.entrySet().iterator().next().getValue().keySet();
-      // Define the expected order of keys in the header
+    try (FileWriter writer =
+        new FileWriter(filename, true)) { // Use append mode to add data to the end of the file
       String[] keys = {"src", "dst", "id", "type", "status"};
 
       // Write the comma seperated keys as the header of the file
       String header = String.join(",", keys) + "\n";
-      writer.write(header);
-
-      // String header = "";
-      // for (Object key : keySet) {
-      //   header += key + ",";
-      // }
-
-      // // Remove the last comma
-      // header = header.substring(0, header.length() - 1);
-      // header += "\n";
-      // writer.write(header);
-
+      // if the file is empty
+      File file = new File(filename);
+      if (file.length() == 0) { // Check if the file is empty
+        writer.write(header);
+      }
       // Iterate through each message and writes its content to a file
       for (Map<String, Object> entry : messages.values()) {
-        String line = "";
+        StringBuilder lineBuilder = new StringBuilder();
         for (Object key : keys) {
-          line += entry.get(key).toString() + ",";
+          lineBuilder.append(entry.get(key)).append(",");
         }
         // Remove the last comma
-        line = line.substring(0, line.length() - 1);
-        line += "\n";
+        String line = lineBuilder.substring(0, lineBuilder.length() - 1) + "\n";
         writer.write(line);
       }
       writer.close();
@@ -122,39 +131,28 @@ public class KademliaObserver implements Control {
    * @param filename the name of the file to write to
    */
   private static void writeMapFind(Map<String, Map<String, Object>> map, String filename) {
-    try (FileWriter writer = new FileWriter(filename)) {
+    try (FileWriter writer =
+        new FileWriter(filename, true)) { // Use append mode to add data to the end of the file
       // Define the expected order of keys in the header
       String[] keys = {"src", "start", "stop", "messages", "hops", "id", "type"};
 
-      // Get the key set of the first entry in the map and use it to create the header
-      // Set<String> keySet = map.entrySet().iterator().next().getValue().keySet();
-
       // Write the comma seperated keys as the header of the file
       String header = String.join(",", keys) + "\n";
-      writer.write(header);
 
-      // String header = "";
-      // for (Object key : keySet) {
-      //   header += key + ",";
-      // }
-
-      // Remove the last comma and add a newline character
-      // header = header.substring(0, header.length() - 1);
-      // header += "\n";
-      // writer.write(header);
+      // if the file is empty
+      File file = new File(filename);
+      if (file.length() == 0) { // Check if the file is empty
+        writer.write(header);
+      }
 
       // Iterate through each find operation and write its data to the file
       for (Map<String, Object> entry : find_log.values()) {
-        String line = "";
+        StringBuilder lineBuilder = new StringBuilder();
         for (Object key : keys) {
-          line +=
-              entry.get(key).toString()
-                  + ","; // Append the string representation of the value to line
+          lineBuilder.append(entry.get(key)).append(",");
         }
-
-        // Remove the last comma and add a newline character
-        line = line.substring(0, line.length() - 1);
-        line += "\n";
+        // Remove the last comma
+        String line = lineBuilder.substring(0, lineBuilder.length() - 1) + "\n";
         writer.write(line);
       }
       writer.close();
@@ -164,7 +162,7 @@ public class KademliaObserver implements Control {
   }
 
   /** Writes log data to files. */
-  public static void writeOut() {
+  public void writeOut() {
     // Create log directory if it does not exist
     File directory = new File(logFolderName);
     if (!directory.exists()) {
@@ -172,25 +170,59 @@ public class KademliaObserver implements Control {
     }
     // Write messages log to file if not empty
     if (!messages.isEmpty()) {
-      writeMap(messages, logFolderName + "/" + "messages.csv");
+      // writeMap(
+      //     messages,
+      //     logFolderName
+      //         + "/messages_"
+      //         + trafficStep
+      //         + "_"
+      //         + KademliaCommonConfig.FINDMODE
+      //         + ".csv");
+
+      // writtenMessages.addAll(messages.keySet()); // Track the written message IDs
+      resetAccumulatedDataSize();
     }
     // Write find operations log to file if not empty
     if (!find_log.isEmpty()) {
-      writeMapFind(find_log, logFolderName + "/" + "operation.csv");
+      writeMapFind(
+          find_log,
+          logFolderName
+              + "/operation_"
+              + size
+              + "_"
+              + KademliaCommonConfig.K
+              + "_"
+              + KademliaCommonConfig.FINDMODE
+              + ".csv");
+      // writtenOperations.addAll(find_log.keySet()); // Track the written operation IDs
     }
 
-    // Write the count data to the "count"file
-    try (FileWriter countWriter = new FileWriter(logFolderName + "/" + "count.csv")) {
+    // Write the count data to the "count" file
+    try (FileWriter countWriter =
+        new FileWriter(
+            logFolderName
+                + "/count_"
+                + size
+                + "_"
+                + KademliaCommonConfig.K
+                + "_"
+                + KademliaCommonConfig.FINDMODE
+                + ".csv")) {
       // Write the count data to the "count" file
-      String countHeader = "message_count,find_op,find_ok\n";
+      String countHeader = "message_count, find_op, find_ok\n";
       countWriter.write(countHeader);
-      String countLine = messages.size() + "," + find_op.getN() + "," + find_ok.getN() + "\n";
+      String countLine =
+          // writtenMessages.size()
+          // + ","
+          msg_deliv.getN() + "," + find_op.getN() + "," + find_ok.getN() + "\n";
       countWriter.write(countLine);
-
       countWriter.close();
     } catch (IOException e) {
       e.printStackTrace();
     }
+
+    messages.clear();
+    find_log.clear();
   }
 
   /**
@@ -210,51 +242,23 @@ public class KademliaObserver implements Control {
     System.gc();
 
     // Check if this is the last execution cycle of the experiment
-    if (CommonState.getEndTime() <= (observerStep + CommonState.getTime())) {
+    if ((shouldWriteOut())) {
       // Write out the logs to disk/permanent storage
       writeOut();
+    }
 
-      // Filepath to write the routing table
-      String filePath = "./logs/routingtable.csv";
+    return false;
+  }
 
-      // Create a Filewriter object to write to the file in append mode
-      try (FileWriter fileWriter = new FileWriter(filePath, true)) {
-        fileWriter.write("Final state of the routing table\n");
-        List<Node> selectedNodes = new ArrayList<>();
-        // Randomly choose 3 nodes
-        // for (int i = 0; i < 3; i++) {
-        //   int randomIndex = CommonState.r.nextInt(sz);
-        //   Node selectedNode = Network.get(randomIndex);
-        //   selectedNodes.add(selectedNode);
-        // }
+  // Reset accumulatedDataSize after writing out the logs
+  private void resetAccumulatedDataSize() {
+    accumulatedMessageCount = 0;
+  }
 
-        // Choose the first node from the beginning
-        Node firstNode = Network.get(0);
-        selectedNodes.add(firstNode);
-
-        // Choose the node from the middle
-        int middleIndex = sz / 2; // Index of the middle node
-        Node middleNode = Network.get(middleIndex);
-        selectedNodes.add(middleNode);
-
-        // Choose the last node from the end
-        Node lastNode = Network.get(sz - 1);
-        selectedNodes.add(lastNode);
-
-        // Iterate over the selected nodes
-        for (Node node : selectedNodes) {
-
-          KademliaProtocol randomNodeKademliaProtocol =
-              (KademliaProtocol) node.getProtocol(kademliaid);
-          // BigInteger randomNodeId = randomNodeKademliaProtocol.getKademliaNode().getId();
-          RoutingTable routingTable = randomNodeKademliaProtocol.getRoutingTable();
-          String routingTableString = routingTable.generateRoutingTableString();
-
-          fileWriter.write(routingTableString);
-        }
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+  private boolean shouldWriteOut() {
+    if (CommonState.getEndTime() <= (observerStep + CommonState.getTime())
+        || accumulatedMessageCount >= MAX_MESSAGE) {
+      return true;
     }
 
     return false;
@@ -271,9 +275,15 @@ public class KademliaObserver implements Control {
     // so we don't want to log them.
     if (m.src == null) return;
 
+    // String messageId = String.valueOf(m.id);
+
     // Add the message to the message log, but first check if it hasn't already been added
-    assert (!messages.keySet().contains(String.valueOf(m.id)));
+    // Removing the checks for performance reasons when dealing with many lookups
+    // if (!writtenMessages.contains(messageId)) {
     messages.put(String.valueOf(m.id), m.toMap(sent));
+    msg_deliv.add(1);
+    accumulatedMessageCount++;
+    // }
   }
 
   /**
@@ -283,8 +293,13 @@ public class KademliaObserver implements Control {
    */
   public static void reportOperation(Operation op) {
 
+    // String operationId = String.valueOf(op.getId());
+    // Add the operation to the operation log, but first check if it hasn't already been added
+    // Commenting out the checks for performance reasons when dealing with large lookups
+    // if (!writtenOperations.contains(operationId)) {
     // Calculate the operation stop time and then add the opearation to the find operation log.
     op.setStopTime(CommonState.getTime() - op.getTimestamp());
     find_log.put(String.valueOf(op.getId()), op.toMap());
+    // }
   }
 }

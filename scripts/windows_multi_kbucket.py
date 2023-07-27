@@ -1,6 +1,8 @@
 import os
 import shutil
 import csv
+from multiprocessing import Pool, cpu_count
+
 
 # Configuration parameters
 node_sizes = {
@@ -16,10 +18,10 @@ node_sizes = {
     # 65536: 22222, 
     # 5000: 654654, 
     # 10000: 319132, 
-
+    # 10000: 319132, 
 }
 
-find_modes = [0, 3]
+find_modes = [0, 3]  # List of find modes
 
 config_files = ['..\\simulator\\config\\kademlia.cfg'] # List of config file paths
 output_dir = '..\\simulator\\output' # Output directory path
@@ -42,10 +44,17 @@ def change_key(file, key, val):
     with open(file, 'r') as f:
         lines = f.readlines()
 
+    count = 0
+
     with open(file, 'w') as f:
         for line in lines:
             if key in line and line.split()[0] == key:
-                line = f"{key} {val}\n"
+                count += 1
+                if key != "K" and count == 1: 
+                    line = f"{key} {val}\n"
+                elif key == "K" and count == 2: 
+                    line = f"{key} {val}\n"
+
             f.write(line)
 
 def calculate_average(file):
@@ -83,7 +92,7 @@ def modify_operation_csv(file, stop_average, hops_average):
         writer = csv.writer(f)
         writer.writerow(['average', stop_average, hops_average])
 
-def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
+def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step, k_value):
     try:
         # Get the base name of the config file 
         config_basename = os.path.basename(config_file)
@@ -94,7 +103,7 @@ def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
         os.makedirs(output_dir_config, exist_ok=True)
 
         # Generate a unique name for the copied config file 
-        unique_name = f"{size}_{find_mode}"
+        unique_name = f"{size}_{k_value}_{find_mode}"
         config_copy = os.path.join(output_dir_config, f"{os.path.splitext(config_basename)[0]}_{unique_name}.cfg")
 
         # Create a separate copy of the config file for this simulation
@@ -106,31 +115,35 @@ def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
         change_key(config_copy, "FINDMODE", str(find_mode))
         change_key(config_copy, "TRAFFIC_STEP", traffic_step)
         change_key(config_copy, "OBSERVER_STEP", observer_step)
+        change_key(config_copy,"K", k_value)
         
         # Run the simulation
         command = f'java -Xmx200000m -cp "{classpath};{target_path}" -ea peersim.Simulator "{config_copy}" > nul 2> nul'
         os.system(command)
 
         # Move the generated log files to the appropriate log folder/directory
-        log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
+        log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}_{k_value}")
         os.makedirs(log_dir_config, exist_ok=True)
-        shutil.move(os.path.join(log_dir, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}_{traffic_step}.csv"))
-        shutil.move(os.path.join(log_dir, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}_{traffic_step}.csv"))
-        shutil.move(os.path.join(log_dir, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{traffic_step}.csv"))
-        shutil.move(os.path.join(log_dir, 'routingtable.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
+        shutil.move(os.path.join(log_dir, f'count_{size}_{k_value}_{find_mode}.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}_{k_value}.csv"))
+        # shutil.move(os.path.join(log_dir, f'messages_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}_{traffic_step}.csv"))
+        shutil.move(os.path.join(log_dir, f'operation_{size}_{k_value}_{find_mode}.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{k_value}.csv"))
+        # shutil.move(os.path.join(log_dir, 'routingtable_{observer_step}.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
 
         # Calculate the averages
-        operation_file = os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{traffic_step}.csv")
+        operation_file = os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{k_value}.csv")
         stop_average, hops_average = calculate_average(operation_file)
 
         # Modify the operation CSV file to include the averages
         if stop_average is not None and hops_average is not None:
             modify_operation_csv(operation_file, stop_average, hops_average)
 
-        print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
+        print("Simulation completed:", config_file, "with size", size, "K-bucket", k_value, "find mode", find_mode)
 
     except Exception as e:
         print("Error occurred during simulation:", e)
+
+def run_sim_wrapper(args):
+    return run_sim(*args)    
 
 def main() -> int:
     shutil.rmtree(output_dir, ignore_errors=True)
@@ -138,23 +151,39 @@ def main() -> int:
 
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
-     
-    traffic_steps = [360000]
-    observer_steps = [359999]
 
+    traffic_steps = [36]
+    observer_steps = [35]
+    
+    k_values = [20, 100, 200, 400, 800, 1600]
+
+    # Create a pool of worker processes
+    num_cores = cpu_count()
+    pool = Pool(num_cores - 1)
+    # pool = Pool(5)
+
+    sim_args = []
     for config_file in config_files:
         for size, seed in node_sizes.items():
-            for i in range(len(traffic_steps)):
-                for find_mode in find_modes:
-                    print("Running", config_file, "with size", size, "seed", seed, "find mode", find_mode, "traffic step", traffic_steps[i])
+            for k_value in k_values:
+                for i in range(len(traffic_steps)):
+                    for find_mode in find_modes:
+                        print("Running", config_file, "with size", size, "K-bucket", k_value, "find mode", find_mode, "traffic step", traffic_steps[i])
 
-                    # Update the traffic step and observer step
-                    traffic_step = traffic_steps[i]
-                    observer_step = observer_steps[i]
-                    
-                    # Run the simulation
-                    run_sim(config_file, size, seed, find_mode, traffic_step, observer_step)
-                    
+                        # Update the traffic step and observer step
+                        traffic_step = traffic_steps[i]
+                        observer_step = observer_steps[i]
+
+                        # Append the simulation arguments to the list
+                        sim_args.append((config_file, size, seed, find_mode, traffic_step, observer_step, k_value))
+
+    # Run the simulations using the worker processes in parallel
+    pool.map(run_sim_wrapper, sim_args)
+
+    # Close the pool of worker processes
+    pool.close()
+    pool.join()
+
     return 0
 
 if __name__ == '__main__':
