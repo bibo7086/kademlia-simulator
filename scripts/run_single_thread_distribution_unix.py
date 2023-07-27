@@ -1,5 +1,7 @@
 import os
 import shutil
+import csv
+from multiprocessing import Pool, cpu_count
 
 # Configuration parameters
 node_sizes = {
@@ -94,8 +96,6 @@ def main() -> int:
                     
                     # Run the simulation
                     run_sim(config_file, size, seed, find_mode, traffic_step, observer_step)
-
-
 
 if __name__ == '__main__':
     main()
