@@ -4,22 +4,25 @@ import csv
 
 # Configuration parameters
 node_sizes = {
-    128: 123456789,
-    256: 67890,
-    512: 45678,
-    1024: 98765,
-    2048: 54321,
-    4096: 24680,
-    8192: 13579,
-    16384: 55555,
-    32768: 88888,
-    65536: 22222
+    # 128: 123456789,
+    # 256: 67890,
+    # 512: 45678,
+    # 1024: 98765,
+    # 2048: 54321,
+    # 4096: 24680,
+    # 8192: 13579,
+    # 16384: 55555,
+    # 32768: 88888,
+    # 65536: 22222,
+    10000: 319132, 
+
 }
 
-config_files = ["./config/kademlia.cfg"]  # List of config file paths
-output_dir = "output"  # Output directory path
-find_modes = [0, 1, 2, 3]  # List of find modes
-log_dir = "logs"  # Log directory path
+find_modes = [3]  # List of find modes
+
+config_files = ["../simulator/config/kademlia.cfg"] # List of config file paths
+output_dir = "../simulator/output/"  # Output directory path
+log_dir = "../simulator/logs/"  # Log directory path
 
 def change_key(file, key, val):
     with open(file, 'r') as f:
@@ -93,14 +96,15 @@ def run_sim(config_file, size, seed, find_mode):
         change_key(config_copy, "FINDMODE", find_mode)
 
         # Run the simulation
-        os.system(f"java -Xmx200000m -cp ./lib/djep-1.0.0.jar:lib/jep-2.3.0.jar:target/service-discovery-1.0-SNAPSHOT.jar:lib/gs-core-2.0.jar:lib/pherd-1.0.jar:lib/mbox2-1.0.jar:lib/gs-ui-swing-2.0.jar -ea peersim.Simulator {config_copy} > /dev/null 2> /dev/null")
-        
+        os.system(f"java -Xmx200000m -cp ../simulator/lib/djep-1.0.0.jar:../simulator/lib/jep-2.3.0.jar:../simulator/target/service-discovery-1.0-SNAPSHOT.jar:../simulator/lib/gs-core-2.0.jar:../simulator/lib/pherd-1.0.jar:../simulator/lib/mbox2-1.0.jar:../simulator/lib/gs-ui-swing-2.0.jar -ea peersim.Simulator {config_copy} > /dev/null 2> /dev/null")
   
         # Move the generated CSV files to the log directory
         log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
-        shutil.move("./logs/count.csv", os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
-        shutil.move("./logs/messages.csv", os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
+        shutil.move("../simulator/logs/count.csv", os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
+        shutil.move("../simulator/logs/messages.csv", os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
+        # shutil.move("../simulator/logs/operation.csv", os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
+        shutil.move("../simulator/logs/routingtable.csv", os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}.csv"))
         operation_file = os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv")
         shutil.move("./logs/operation.csv", operation_file)
 
