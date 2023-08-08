@@ -767,8 +767,8 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     logger.setUseParentHandlers(false);
 
     // Set the logger's level to WARNING
-    logger.setLevel(Level.OFF);
-    // logger.setLevel(Level.ALL);
+    // logger.setLevel(Level.OFF);
+    logger.setLevel(Level.ALL);
 
     // Create a console handler for the logger
     ConsoleHandler handler = new ConsoleHandler();

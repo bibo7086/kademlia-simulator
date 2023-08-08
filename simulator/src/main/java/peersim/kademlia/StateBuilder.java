@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import peersim.config.Configuration;
-import peersim.core.CommonState;
 import peersim.core.Network;
 import peersim.core.Node;
 import peersim.transport.Transport;
@@ -101,37 +100,38 @@ public class StateBuilder implements peersim.core.Control {
         });
 
     int sz = Network.size();
-    // For every node, add 100 random nodes to its k-bucket - not sure why this was 50 previously...
-    for (int i = 0; i < sz; i++) {
-      Node iNode = Network.get(i);
-      KademliaProtocol iKad = (KademliaProtocol) (iNode.getProtocol(kademliaid));
+    // For every node, fill each of its k-buckets with the best possible nodes...
 
-      for (int k = 0; k < 100; k++) {
-        KademliaProtocol jKad =
-            (KademliaProtocol) (Network.get(CommonState.r.nextInt(sz)).getProtocol(kademliaid));
-        iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
-      }
-    }
-
-    // Add 50 nearby nodes to each node's k-bucket based on proximity to ID
+    // Iterate over each node in the network
     for (int i = 0; i < sz; i++) {
       Node iNode = Network.get(i);
       KademliaProtocol iKad = (KademliaProtocol) (iNode.getProtocol(kademliaid));
       BigInteger iNodeId = iKad.getKademliaNode().getId();
 
-      int start = i + 1;
-      if (start > sz - 50) {
-        start = sz - 25;
-      }
-      for (int k = 0; k < 50; k++) {
-        start++;
-        if (start < sz) {
-          KademliaProtocol jKad = (KademliaProtocol) (Network.get(start).getProtocol(kademliaid));
-          BigInteger jNodeId = jKad.getKademliaNode().getId();
-          if (!jNodeId.equals(iNodeId)) {
-            iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
-          }
+      // Create an array to store the count of nodes added for each prefix length index
+      int[] nodesAddedCount = new int[KademliaCommonConfig.BITS];
+
+      // Iterate over the whole nodes
+      for (int k = 0; k < sz; k++) {
+        Node jNode = Network.get(k);
+        KademliaProtocol jKad = (KademliaProtocol) (jNode.getProtocol(kademliaid));
+        BigInteger jNodeId = jKad.getKademliaNode().getId();
+
+        // Calculate the length of the longest common prefix
+        int prefixLen = Util.prefixLen(iNodeId, jNodeId);
+
+        if (prefixLen == KademliaCommonConfig.BITS) {
+          prefixLen = KademliaCommonConfig.BITS - 1;
         }
+
+        if (nodesAddedCount[prefixLen] >= KademliaCommonConfig.K) {
+          continue; // Skip if already added maximum nodes for the bit index
+        }
+
+        // Add the node to the routing table
+        iKad.getRoutingTable().addNeighbour(jNodeId);
+
+        nodesAddedCount[prefixLen]++;
       }
     }
 
@@ -155,7 +155,7 @@ public class StateBuilder implements peersim.core.Control {
       selectedNodes.add(firstNode);
 
       // Choose the node from the middle
-      int middleIndex = sz / 2; // Index of the middle node
+      int middleIndex = sz / 2;
       Node middleNode = Network.get(middleIndex);
       selectedNodes.add(middleNode);
 

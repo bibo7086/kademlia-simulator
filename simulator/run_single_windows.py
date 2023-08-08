@@ -77,9 +77,9 @@ def run_sim(config_file, size, seed, find_mode):
         log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
 
-        shutil.move(os.path.join(test_path, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
-        shutil.move(os.path.join(test_path, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
-        shutil.move(os.path.join(test_path, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
 
         print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
 

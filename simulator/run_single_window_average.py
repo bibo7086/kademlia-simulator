@@ -14,7 +14,7 @@ node_sizes = {
     # 16384: 55555,
     # 32768: 88888,
     # 65536: 22222, 
-    5000: 654654, 
+    128: 319132, 
 }
 
 find_modes = [0, 1 , 2, 3]
@@ -114,9 +114,10 @@ def run_sim(config_file, size, seed, find_mode):
         # Move the generated log files to the appropriate log folder/directory
         log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
-        shutil.move(os.path.join(test_path, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
-        shutil.move(os.path.join(test_path, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
-        shutil.move(os.path.join(test_path, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
+        shutil.move(os.path.join(log_dir, 'routingtable.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}.csv"))
 
         # Calculate the averages
         operation_file = os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv")
