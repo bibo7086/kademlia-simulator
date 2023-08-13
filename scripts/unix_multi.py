@@ -1,7 +1,7 @@
 import os
 import shutil
 import multiprocessing as mp
-
+from common_code import * 
 # Configuration parameters
 node_sizes = {
     128: 123456789,
@@ -18,20 +18,6 @@ node_sizes = {
 
 find_modes = [0, 1, 2, 3]  # List of find modes
 
-config_files = ["../simulator/config/kademlia.cfg"] # List of config file paths
-output_dir = "../simulator/output/"  # Output directory path
-log_dir = "../simulator/logs/"  # Log directory path
-
-def change_key(file, key, val):
-    with open(file, 'r') as f:
-        lines = f.readlines()
-
-    with open(file, 'w') as f:
-        for line in lines:
-            if key in line and line.split()[0] == key:
-                line = f"{key} {val}\n"
-            f.write(line)
-
 def run_sim(config_file, size, seed, find_mode, lock):
     try:
         # Get the base name of the config file 
@@ -39,7 +25,7 @@ def run_sim(config_file, size, seed, find_mode, lock):
 
         # Create a separate directory for each configuration
         config_name = os.path.splitext(os.path.basename(config_file))[0]
-        output_dir_config = os.path.join(output_dir, config_name)
+        output_dir_config = os.path.join(unix_output_dir, config_name)
         os.makedirs(output_dir_config, exist_ok=True)
 
         # Generate a unique name for the to be copied config file 
@@ -65,7 +51,7 @@ def run_sim(config_file, size, seed, find_mode, lock):
         # Acquire lock to ensure exclusive access to the log folder
         # lock.acquire()
         # Move the generated CSV files to the appropriate log directory
-        log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
+        log_dir_config = os.path.join(unix_log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
         shutil.move("../simulator/logs/count.csv", os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
         shutil.move("../simulator/logs/messages.csv", os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
@@ -73,7 +59,7 @@ def run_sim(config_file, size, seed, find_mode, lock):
         shutil.move("../simulator/logs/routingtable.csv", os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}.csv"))
 
         # Move the generated log files to the appropriate log folder/directory
-        log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
+        log_dir_config = os.path.join(unix_log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
        
         print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
@@ -86,11 +72,11 @@ def run_sim(config_file, size, seed, find_mode, lock):
         print("Error occurred during simulation:", e)
 
 def main():
-    os.system(f"rm -rf {output_dir}")
-    os.system(f"rm -rf {log_dir}")
+    os.system(f"rm -rf {unix_output_dir}")
+    os.system(f"rm -rf {unix_log_dir}")
 
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(unix_output_dir, exist_ok=True)
+    os.makedirs(unix_log_dir, exist_ok=True)
 
     # Create a multiprocessing Pool
     # pool = mp.Pool() # Asynchronous calls will open a can of worms 
@@ -100,7 +86,7 @@ def main():
     manager = mp.Manager()
     lock = manager.Lock()
 
-    for config_file in config_files:
+    for config_file in unix_config_files:
         for find_mode in find_modes:
             for size, seed in node_sizes.items():
                 print("Running", config_file, "with size", size, "seed", seed, "find mode", find_mode)

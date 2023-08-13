@@ -1,7 +1,7 @@
 import os
 import shutil
 import csv
-
+from common_code import * 
 # Configuration parameters
 node_sizes = {
     128: 123456789,
@@ -18,55 +18,6 @@ node_sizes = {
 
 find_modes = [0, 1, 2, 3]  # List of find modes
 
-config_files = ["../simulator/config/kademlia.cfg"] # List of config file paths
-output_dir = "../simulator/output/"  # Output directory path
-log_dir = "../simulator/logs/"  # Log directory path
-
-def change_key(file, key, val):
-    with open(file, 'r') as f:
-        lines = f.readlines()
-
-    with open(file, 'w') as f:
-        for line in lines:
-            if key in line and line.split()[0] == key:
-                line = f"{key} {val}\n"
-            f.write(line)
-
-def calculate_average(file):
-    with open(file, 'r') as f:
-        reader = csv.DictReader(f)
-        stop_sum = 0
-        hops_sum = 0
-        count = 0
-        for row in reader:
-            stop_sum += int(row['stop'])
-            hops_sum += int(row['hops'])
-            count += 1
-
-    if count > 0:
-        stop_average = round(stop_sum / count, 3)
-        hops_average = round(hops_sum / count, 3) 
-        return stop_average, hops_average
-    else:
-        return None, None
-
-def modify_operation_csv(file, stop_average, hops_average):
-    temp_file = file + '.tmp'
-
-    with open(file, 'r') as f, open(temp_file, 'w') as temp:
-        reader = csv.DictReader(f)
-        writer = csv.DictWriter(temp, fieldnames=reader.fieldnames)
-        writer.writeheader()
-        for row in reader:
-            writer.writerow(row)
-
-    os.remove(file)
-    os.rename(temp_file, file)
-
-    with open(file, 'a') as f:
-        writer = csv.writer(f)
-        writer.writerow(['average', stop_average, hops_average])
-
 def run_sim(config_file, size, seed, find_mode):
     try:
         # Get the base name of the config file 
@@ -74,7 +25,7 @@ def run_sim(config_file, size, seed, find_mode):
 
         # Create a separate directory for each configuration
         config_name = os.path.splitext(os.path.basename(config_file))[0]
-        output_dir_config = os.path.join(output_dir, config_name)
+        output_dir_config = os.path.join(unix_output_dir, config_name)
         os.makedirs(output_dir_config, exist_ok=True)
 
         # Generate a unique name for the to be copied config file 
@@ -97,7 +48,7 @@ def run_sim(config_file, size, seed, find_mode):
         os.system(f"java -Xmx200000m -cp ../simulator/lib/djep-1.0.0.jar:../simulator/lib/jep-2.3.0.jar:../simulator/target/service-discovery-1.0-SNAPSHOT.jar:../simulator/lib/gs-core-2.0.jar:../simulator/lib/pherd-1.0.jar:../simulator/lib/mbox2-1.0.jar:../simulator/lib/gs-ui-swing-2.0.jar -ea peersim.Simulator {config_copy} > /dev/null 2> /dev/null")
   
         # Move the generated CSV files to the log directory
-        log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
+        log_dir_config = os.path.join(unix_log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
         shutil.move("../simulator/logs/count.csv", os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
         shutil.move("../simulator/logs/messages.csv", os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
@@ -118,13 +69,13 @@ def run_sim(config_file, size, seed, find_mode):
     except Exception as e: 
         print("Error occured during simulation: ", e)
 def main():
-    os.system(f"rm -rf {output_dir}")
-    os.system(f"rm -rf {log_dir}")
+    os.system(f"rm -rf {unix_output_dir}")
+    os.system(f"rm -rf {unix_log_dir}")
 
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(unix_output_dir, exist_ok=True)
+    os.makedirs(unix_log_dir, exist_ok=True)
 
-    for config_file in config_files:
+    for config_file in unix_config_files:
         for find_mode in find_modes:
             for size, seed in node_sizes.items():
                 print("Running", config_file, "with size", size, "seed", seed, "find mode", find_mode)

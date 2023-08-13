@@ -1,7 +1,7 @@
 import os
 import shutil
 import csv
-
+from common_code import *
 # Configuration parameters
 node_sizes = {
     # 128: 123456789,
@@ -21,67 +21,15 @@ node_sizes = {
 
 find_modes = [0, 1 , 2, 3]
 
-config_files = ['..\\simulator\\config\\kademlia.cfg'] # List of config file paths
-output_dir = '..\\simulator\\output' # Output directory path
-log_dir = '..\\simulator\\logs' # Log directory path
-base_path = '..\\simulator'
+config_files = windows_config_files # List of config file paths
+output_dir = windows_output_dir # Output directory path
+log_dir =  windows_log_dir # Log directory path
+base_path = windows_base_path
 
-jar_paths = [
-    os.path.join(base_path, 'lib', 'djep-1.0.0.jar'),
-    os.path.join(base_path, 'lib', 'jep-2.3.0.jar'),
-    os.path.join(base_path, 'lib', 'gs-core-2.0.jar'),
-    os.path.join(base_path, 'lib', 'mbox2-1.0.jar'),
-    os.path.join(base_path, 'lib', 'gs-ui-swing-2.0.jar'),
-]
+jar_paths = windows_jar_paths
+target_path = windows_target_path
 
-target_path = os.path.join(base_path, 'target', 'service-discovery-1.0-SNAPSHOT.jar')
-
-classpath = ';'.join(jar_paths)
-
-def change_key(file, key, val):
-    with open(file, 'r') as f:
-        lines = f.readlines()
-
-    with open(file, 'w') as f:
-        for line in lines:
-            if key in line and line.split()[0] == key:
-                line = f"{key} {val}\n"
-            f.write(line)
-
-def calculate_average(file):
-    with open(file, 'r') as f:
-        reader = csv.DictReader(f)
-        stop_sum = 0
-        hops_sum = 0
-        count = 0
-        for row in reader:
-            stop_sum += int(row['stop'])
-            hops_sum += int(row['hops'])
-            count += 1
-
-    if count > 0:
-        stop_average = round(stop_sum / count, 3)
-        hops_average = round(hops_sum / count, 3) 
-        return stop_average, hops_average
-    else:
-        return None, None
-
-def modify_operation_csv(file, stop_average, hops_average):
-    temp_file = file + '.tmp'
-
-    with open(file, 'r') as f, open(temp_file, 'w', newline='') as temp:
-        reader = csv.DictReader(f)
-        writer = csv.DictWriter(temp, fieldnames=reader.fieldnames)
-        writer.writeheader()
-        for row in reader:
-            writer.writerow(row)
-
-    os.remove(file)
-    os.rename(temp_file, file)
-
-    with open(file, 'a', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(['average', stop_average, hops_average])
+classpath = windows_classpath
 
 # def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
 def run_sim(config_file, size, seed, find_mode):
