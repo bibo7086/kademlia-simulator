@@ -17,7 +17,7 @@ node_sizes = {
     # 32768: 88888,
     # 65536: 22222, 
     # 5000: 654654, 
-    10000: 319132, 
+    10000: 357335434, 
 }
 
 find_modes = [0, 3]  # List of find modes
@@ -49,15 +49,17 @@ def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
         # Run the simulation
         command = f'java -Xmx200000m -cp "{windows_classpath};{windows_target_path}" -ea peersim.Simulator "{config_copy}" > nul 2> nul'
         os.system(command)
+        # os.system(f"java -Xmx200000m -cp ../simulator/lib/djep-1.0.0.jar;../simulator/lib/jep-2.3.0.jar;../simulator/target/service-discovery-1.0-SNAPSHOT.jar;../simulator/lib/gs-core-2.0.jar;../simulator/lib/pherd-1.0.jar;../simulator/lib/mbox2-1.0.jar;../simulator/lib/gs-ui-swing-2.0.jar -ea peersim.Simulator {config_copy} > /dev/null 2> /dev/null")
+
 
         # Move the generated log files to the appropriate log folder/directory
         log_dir_config = os.path.join(windows_log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
 
-        shutil.move(os.path.join(unix_log_dir, f'count_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}_{traffic_step}.csv"))
-        # shutil.move(os.path.join(unix_log_dir, f'messages_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}_{traffic_step}.csv"))
-        shutil.move(os.path.join(unix_log_dir, f'operation_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{traffic_step}.csv"))
-        # shutil.move(os.path.join(unix_log_dir, 'routingtable_{observer_step}.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
+        shutil.move(os.path.join(windows_log_dir, f'count_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}_{traffic_step}.csv"))
+        # shutil.move(os.path.join(windows_log_dir, f'messages_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}_{traffic_step}.csv"))
+        shutil.move(os.path.join(windows_log_dir, f'operation_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{traffic_step}.csv"))
+        # shutil.move(os.path.join(windows_log_dir, 'routingtable_{observer_step}.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
 
         print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
 
@@ -76,8 +78,8 @@ def main() -> int:
     
     # traffic_steps = [14400, 7200, 3600, 1200, 600, 300]
     # observer_steps = [14399, 7199, 3599, 1199, 599, 299]
-    traffic_steps = [50]
-    observer_steps = [49]
+    traffic_steps = [100]
+    observer_steps = [99]
 
     sim_args = []
 

@@ -92,6 +92,47 @@ public class RoutingTable implements Cloneable {
    * @return an array of BigInteger representing the closest neighbors
    */
   public BigInteger[] getNeighboursXor(final BigInteger key, final BigInteger src) {
+    // Neighbor candidates
+    List<BigInteger> neighbour_candidates = new ArrayList<BigInteger>();
+
+    // Get the length of the longest common prefix
+    int prefixLen = Util.prefixLen(nodeId, key);
+
+    if (prefixLen < 0) {
+      return new BigInteger[] {nodeId};
+    }
+
+    // Add neighbors at the prefix len
+    neighbour_candidates.addAll(bucketAtDistancexor(prefixLen).neighbours.keySet());
+
+    // otherwise get k closest nodes from the adjacent k-buckets
+    if (neighbour_candidates.size() < k && (prefixLen + 1) <= 255) {
+      // Add neighbors at the next distance
+      neighbour_candidates.addAll(bucketAtDistancexor(prefixLen + 1).neighbours.keySet());
+    }
+
+    // Add neighbors at the previous distance
+    if (neighbour_candidates.size() < k && (prefixLen - 1) >= 0) {
+      neighbour_candidates.addAll(bucketAtDistancexor(prefixLen - 1).neighbours.keySet());
+    }
+
+    // Remove excess neighbors until the size is <= k
+    if (neighbour_candidates.size() > k) {
+      neighbour_candidates = neighbour_candidates.subList(0, k);
+    }
+
+    // Conver the result (candidate neighbors) to an array and return it
+    return neighbour_candidates.toArray(new BigInteger[0]);
+  }
+  /**
+   * This is the original implementation I inherited for retrieving the closest neighbors to a key
+   * from the appropriate k-bucket using XOR metric.
+   *
+   * @param key the key to find neighbors for
+   * @param src the source node ID
+   * @return an array of BigInteger representing the closest neighbors
+   */
+  public BigInteger[] getNeighboursXor_original(final BigInteger key, final BigInteger src) {
     // Resulting neighbours
     BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
 
@@ -109,26 +150,13 @@ public class RoutingTable implements Cloneable {
       return bucketAtDistancexor(prefixLen).neighbours.keySet().toArray(result);
     }
 
-    neighbour_candidates.addAll(bucketAtDistancexor(prefixLen).neighbours.keySet());
-
-    // otherwise get k closest nodes from the adjacent k-buckets
-    if (neighbour_candidates.size() < k && (prefixLen + 1) <= 255) {
-      // Add neighbors at the next distance
-      neighbour_candidates.addAll(bucketAtDistancexor(prefixLen + 1).neighbours.keySet());
-      // Remove excess neighbors until the size is <= k
-      while (neighbour_candidates.size() > k) {
-        neighbour_candidates.remove(neighbour_candidates.size() - 1);
-      }
-    }
-
-    // Add neighbors at the previous distance
-    if (neighbour_candidates.size() < k && (prefixLen - 1) >= 0) {
-      neighbour_candidates.addAll(bucketAtDistancexor(prefixLen - 1).neighbours.keySet());
-
-      // Remove excess neighbors until the size is <= k
-      while (neighbour_candidates.size() > k) {
-        neighbour_candidates.remove(neighbour_candidates.size() - 1);
-      }
+    // Otherwise get k closest nodes from all k-buckets
+    prefixLen = 0;
+    while (prefixLen < KademliaCommonConfig.BITS) {
+      neighbour_candidates.addAll(bucketAtDistancexor(prefixLen).neighbours.keySet());
+      // Remove source id
+      neighbour_candidates.remove(src);
+      prefixLen++;
     }
 
     TreeMap<BigInteger, List<BigInteger>> distance_map = new TreeMap<>();
@@ -163,50 +191,7 @@ public class RoutingTable implements Cloneable {
       result = new BigInteger[bestNeighbours.size()];
     }
 
-    return neighbour_candidates.toArray(result);
-
-    // // Otherwise get k closest nodes from all k-buckets
-    // prefixLen = 0;
-    // while (prefixLen < KademliaCommonConfig.BITS) {
-    //   neighbour_candidates.addAll(bucketAtDistancexor(prefixLen).neighbours.keySet());
-    //   // Remove source id
-    //   neighbour_candidates.remove(src);
-    //   prefixLen++;
-    // }
-
-    // TreeMap<BigInteger, List<BigInteger>> distance_map = new TreeMap<>();
-    // if (neighbour_candidates.isEmpty()) {
-    //   return new BigInteger[0];
-    // }
-
-    // for (BigInteger node : neighbour_candidates) {
-    //   if (distance_map.get(Util.xorDistance(node, key)) == null) {
-    //     List<BigInteger> l = new ArrayList<BigInteger>();
-    //     l.add(node);
-    //     distance_map.put(Util.xorDistance(node, key), l);
-    //   } else {
-
-    //     distance_map.get(Util.xorDistance(node, key)).add(node);
-    //   }
-    // }
-
-    // // Best neighbors
-    // List<BigInteger> bestNeighbours = new ArrayList<>();
-    // for (List<BigInteger> list : distance_map.values()) {
-    //   for (BigInteger i : list) {
-    //     if (bestNeighbours.size() < KademliaCommonConfig.K) {
-    //       bestNeighbours.add(i);
-    //     } else {
-    //       break;
-    //     }
-    //   }
-    // }
-
-    // if (bestNeighbours.size() < KademliaCommonConfig.K) {
-    //   result = new BigInteger[bestNeighbours.size()];
-    // }
-
-    // return bestNeighbours.toArray(result);
+    return bestNeighbours.toArray(result);
   }
 
   /**
@@ -258,8 +243,7 @@ public class RoutingTable implements Cloneable {
     // Neighbour candidates
     ArrayList<BigInteger> neighbour_candidates = new ArrayList<BigInteger>();
 
-    // Get the length of the longest common prefix (use a better description to capture the fact
-    // that log distance is being used)
+    // Get the log distance
     int prefix_len = Util.logDistance(nodeId, key);
 
     if (prefix_len < 0) {

@@ -256,6 +256,12 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
       if (callback != null) {
         callback.nodesFound(fop, neighbors);
       }
+      // System.out.println("Returned neighbors:");
+      // System.out.println("Number of neighbors: " + neighbors.length);
+      // for (BigInteger neighbor : neighbors) {
+      //   System.out.println(neighbor);
+      // }
+
       for (BigInteger neighbor : neighbors) {
         routingTable.addNeighbour(neighbor);
       }
@@ -767,8 +773,8 @@ public class KademliaProtocol implements Cloneable, EDProtocol {
     logger.setUseParentHandlers(false);
 
     // Set the logger's level to WARNING
-    logger.setLevel(Level.OFF);
-    // logger.setLevel(Level.ALL);
+    // logger.setLevel(Level.OFF);
+    logger.setLevel(Level.ALL);
 
     // Create a console handler for the logger
     ConsoleHandler handler = new ConsoleHandler();
