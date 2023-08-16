@@ -85,13 +85,57 @@ public class RoutingTable implements Cloneable {
   }
 
   /**
-   * Retrieves the closest neighbors to a key from the appropriate k-bucket using XOR metric.
+   * Retrieves the closest neighbors to a key from the appropriate k-bucket using XOR metric exactly
+   * the same way the log based version does by getting adjacent neigbors when the prefix len does
+   * not have enough peers.
    *
    * @param key the key to find neighbors for
    * @param src the source node ID
    * @return an array of BigInteger representing the closest neighbors
    */
   public BigInteger[] getNeighboursXor(final BigInteger key, final BigInteger src) {
+    // Neighbor candidates
+    List<BigInteger> neighbour_candidates = new ArrayList<BigInteger>();
+
+    // Get the length of the longest common prefix
+    int prefixLen = Util.prefixLen(nodeId, key);
+
+    if (prefixLen < 0) {
+      return new BigInteger[] {nodeId};
+    }
+
+    // Add neighbors at the prefix len
+    neighbour_candidates.addAll(bucketAtDistancexor(prefixLen).neighbours.keySet());
+
+    // otherwise get k closest nodes from the adjacent k-buckets
+    if (neighbour_candidates.size() < k && (prefixLen + 1) <= 256) {
+      // Add neighbors at the next distance
+      neighbour_candidates.addAll(bucketAtDistancexor(prefixLen + 1).neighbours.keySet());
+    }
+
+    // Add neighbors at the previous distance
+    if (neighbour_candidates.size() < k && (prefixLen - 1) >= 0) {
+      neighbour_candidates.addAll(bucketAtDistancexor(prefixLen - 1).neighbours.keySet());
+    }
+
+    // Remove excess neighbors until the size is <= k
+    if (neighbour_candidates.size() > k) {
+      neighbour_candidates = neighbour_candidates.subList(0, k);
+    }
+
+    // Conver the result (candidate neighbors) to an array and return it
+    return neighbour_candidates.toArray(new BigInteger[0]);
+  }
+
+  /**
+   * This is the original implementation inherited for retrieving the closest neighbors to a key
+   * from the appropriate k-bucket using XOR metric.
+   *
+   * @param key the key to find neighbors for
+   * @param src the source node ID
+   * @return an array of BigInteger representing the closest neighbors
+   */
+  public BigInteger[] getNeighboursXor_original(final BigInteger key, final BigInteger src) {
     // Resulting neighbours
     BigInteger[] result = new BigInteger[KademliaCommonConfig.K];
 
