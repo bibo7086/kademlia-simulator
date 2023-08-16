@@ -1,10 +1,11 @@
 import os
 import shutil
+from common_code import *
 
 # Configuration parameters
 node_sizes = {
     128: 123456789,
-    # 256: 67890,
+    256: 67890,
     # 512: 45678,
     # 1024: 98765,
     # 2048: 54321,
@@ -13,24 +14,19 @@ node_sizes = {
     # 16384: 55555,
     # 32768: 88888,
     # 65536: 22222, 
+    # 5000: 654654, 
     # 10000: 319132, 
 }
 
-find_modes = [0, 1, 2, 3]  # List of find modes
+find_modes = [0, 3]  # List of find modes
 
-config_files = ["../simulator/config/kademlia.cfg"] # List of config file paths
-output_dir = "../simulator/output/"  # Output directory path
-log_dir = "../simulator/logs/"  # Log directory path
-
-def change_key(file, key, val):
-    with open(file, 'r') as f:
-        lines = f.readlines()
-
-    with open(file, 'w') as f:
-        for line in lines:
-            if key in line and line.split()[0] == key:
-                line = f"{key} {val}\n"
-            f.write(line)
+config_files = unix_config_files # List of config file paths
+output_dir = unix_output_dir # Output directory path
+log_dir = unix_log_dir  # Log directory path
+base_path = unix_base_path
+jar_paths = unix_jar_paths
+target_path = target_path
+classpath = unix_classpath
 
 def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
     try:

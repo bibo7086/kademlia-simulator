@@ -1,9 +1,10 @@
 import os
 import shutil
+from common_code import *
 
 # Configuration parameters
 node_sizes = {
-    128: 1234567,
+    128: 123456789,
     # 256: 67890,
     # 512: 45678,
     # 1024: 98765,
@@ -13,37 +14,22 @@ node_sizes = {
     # 16384: 55555,
     # 32768: 88888,
     # 65536: 22222, 
+    # 5000: 654654, 
     # 10000: 319132, 
+
 }
 
-find_modes = [0, 1 , 2, 3]
+find_modes = [0, 3]
 
-config_files = ['..\\simulator\\config\\kademlia.cfg'] # List of config file paths
-output_dir = '..\\simulator\\output' # Output directory path
-log_dir = '..\\simulator\\logs' # Log directory path
-base_path = '..\\simulator'
+config_files = windows_config_files # List of config file paths
+output_dir = windows_output_dir # Output directory path
+log_dir =  windows_log_dir # Log directory path
+base_path = windows_base_path
 
-jar_paths = [
-    os.path.join(base_path, 'lib', 'djep-1.0.0.jar'),
-    os.path.join(base_path, 'lib', 'jep-2.3.0.jar'),
-    os.path.join(base_path, 'lib', 'gs-core-2.0.jar'),
-    os.path.join(base_path, 'lib', 'mbox2-1.0.jar'),
-    os.path.join(base_path, 'lib', 'gs-ui-swing-2.0.jar'),
-]
+jar_paths = windows_jar_paths
+target_path = windows_target_path
 
-target_path = os.path.join(base_path, 'target', 'service-discovery-1.0-SNAPSHOT.jar')
-
-classpath = ';'.join(jar_paths)
-
-def change_key(file, key, val):
-    with open(file, 'r') as f:
-        lines = f.readlines()
-
-    with open(file, 'w') as f:
-        for line in lines:
-            if key in line and line.split()[0] == key:
-                line = f"{key} {val}\n"
-            f.write(line)
+classpath = windows_classpath
 
 def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
     try:
