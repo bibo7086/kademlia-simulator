@@ -1,12 +1,12 @@
 import os
 import shutil
-import csv
+import csv 
 from multiprocessing import Pool, cpu_count
-
+from common_code import *
 
 # Configuration parameters
 node_sizes = {
-    128: 123456789,
+    # 128: 123456789,
     # 256: 67890,
     # 512: 45678,
     # 1024: 98765,
@@ -17,39 +17,11 @@ node_sizes = {
     # 32768: 88888,
     # 65536: 22222, 
     # 5000: 654654, 
-    # 10000: 319132, 
-    # 10000: 319132, 
+    10000: 974323, 
 }
 
 find_modes = [0, 3]  # List of find modes
-
-config_files = ['..\\simulator\\config\\kademlia.cfg'] # List of config file paths
-output_dir = '..\\simulator\\output' # Output directory path
-log_dir = '..\\simulator\\logs' # Log directory path
-base_path = '..\\simulator'
-
-jar_paths = [
-    os.path.join(base_path, 'lib', 'djep-1.0.0.jar'),
-    os.path.join(base_path, 'lib', 'jep-2.3.0.jar'),
-    os.path.join(base_path, 'lib', 'gs-core-2.0.jar'),
-    os.path.join(base_path, 'lib', 'mbox2-1.0.jar'),
-    os.path.join(base_path, 'lib', 'gs-ui-swing-2.0.jar'),
-]
-
-target_path = os.path.join(base_path, 'target', 'service-discovery-1.0-SNAPSHOT.jar')
-
-classpath = ';'.join(jar_paths)
-
-def change_key(file, key, val):
-    with open(file, 'r') as f:
-        lines = f.readlines()
-
-    with open(file, 'w') as f:
-        for line in lines:
-            if key in line and line.split()[0] == key:
-                line = f"{key} {val}\n"
-            f.write(line)
-
+    
 def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
     try:
         # Get the base name of the config file 
@@ -57,7 +29,7 @@ def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
 
         # Create a separate directory for each configuration
         config_name = os.path.splitext(os.path.basename(config_file))[0]
-        output_dir_config = os.path.join(output_dir, config_name)
+        output_dir_config = os.path.join(windows_output_dir, config_name)
         os.makedirs(output_dir_config, exist_ok=True)
 
         # Generate a unique name for the copied config file 
@@ -75,17 +47,17 @@ def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
         change_key(config_copy, "OBSERVER_STEP", observer_step)
 
         # Run the simulation
-        command = f'java -Xmx200000m -cp "{classpath};{target_path}" -ea peersim.Simulator "{config_copy}" > nul 2> nul'
+        command = f'java -Xmx200000m -cp "{windows_classpath};{windows_target_path}" -ea peersim.Simulator "{config_copy}" > nul 2> nul'
         os.system(command)
 
         # Move the generated log files to the appropriate log folder/directory
-        log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
+        log_dir_config = os.path.join(windows_log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
 
-        shutil.move(os.path.join(log_dir, 'count.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}_{traffic_step}.csv"))
-        shutil.move(os.path.join(log_dir, 'messages.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}_{traffic_step}.csv"))
-        shutil.move(os.path.join(log_dir, 'operation.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{traffic_step}.csv"))
-        shutil.move(os.path.join(log_dir, 'routingtable.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
+        shutil.move(os.path.join(windows_log_dir, f'count_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}_{traffic_step}.csv"))
+        # shutil.move(os.path.join(windows_log_dir, f'messages_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}_{traffic_step}.csv"))
+        shutil.move(os.path.join(windows_log_dir, f'operation_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{traffic_step}.csv"))
+        # shutil.move(os.path.join(windows_log_dir, 'routingtable_{observer_step}.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
 
         print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
 
@@ -96,25 +68,27 @@ def run_sim_wrapper(args):
     return run_sim(*args)   
 
 def main() -> int:
-    shutil.rmtree(output_dir, ignore_errors=True)
-    shutil.rmtree(log_dir, ignore_errors=True)
+    shutil.rmtree(windows_output_dir, ignore_errors=True)
+    shutil.rmtree(windows_log_dir, ignore_errors=True)
 
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(windows_output_dir, exist_ok=True)
+    os.makedirs(windows_log_dir, exist_ok=True)
     
     # traffic_steps = [14400, 7200, 3600, 1200, 600, 300]
     # observer_steps = [14399, 7199, 3599, 1199, 599, 299]
-    traffic_steps = [100000]
-    observer_steps = [100000]
+    traffic_steps = [1000]
+    observer_steps = [1000]
 
     sim_args = []
 
-     # Create a pool of worker processes
-    num_cores = cpu_count()
-    pool = Pool(num_cores - 1)
+    # Create a pool of worker processes
+    # num_cores = cpu_count()
     # pool = Pool(5)
+
+    num_cores = 2
+    pool = Pool(num_cores)
     
-    for config_file in config_files:
+    for config_file in windows_config_files:
         for size, seed in node_sizes.items():
             for i in range(len(traffic_steps)):
                 for find_mode in find_modes:

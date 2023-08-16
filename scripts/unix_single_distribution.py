@@ -18,7 +18,7 @@ node_sizes = {
     # 10000: 319132, 
 }
 
-find_modes = [0, 1, 2, 3]  # List of find modes
+find_modes = [0, 3]  # List of find modes
 
 config_files = ["../simulator/config/kademlia.cfg"] # List of config file paths
 output_dir = "../simulator/output/"  # Output directory path
@@ -65,11 +65,12 @@ def run_sim(config_file, size, seed, find_mode, traffic_step, observer_step):
         # Move the generated log files to the appropriate log folder/directory
         log_dir_config = os.path.join(log_dir, f"log_{size}_{find_mode}")
         os.makedirs(log_dir_config, exist_ok=True)
-        shutil.move("../simulator/logs/count.csv", os.path.join(log_dir_config, f"count_{size}_{find_mode}.csv"))
-        shutil.move("../simulator/logs/messages.csv", os.path.join(log_dir_config, f"messages_{size}_{find_mode}.csv"))
-        shutil.move("../simulator/logs/operation.csv", os.path.join(log_dir_config, f"operation_{size}_{find_mode}.csv"))
-        shutil.move("../simulator/logs/routingtable.csv", os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
-    
+
+        shutil.move(os.path.join(log_dir, f'count_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"count_{size}_{find_mode}_{traffic_step}.csv"))
+        # shutil.move(os.path.join(log_dir, f'messages_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"messages_{size}_{find_mode}_{traffic_step}.csv"))
+        shutil.move(os.path.join(log_dir, f'operation_{size}_{traffic_step}_{find_mode}.csv'), os.path.join(log_dir_config, f"operation_{size}_{find_mode}_{traffic_step}.csv"))
+        # shutil.move(os.path.join(log_dir, 'routingtable_{observer_step}.csv'), os.path.join(log_dir_config, f"routing_table_{size}_{find_mode}_{traffic_step}.csv"))
+
         print("Simulation completed:", config_file, "with size", size, "seed", seed, "find mode", find_mode)
 
     except Exception as e: 
@@ -82,8 +83,8 @@ def main() -> int:
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(log_dir, exist_ok=True)
 
-    traffic_steps = [7200, 3600, 1200, 600, 300]
-    observer_steps = [7199, 3599, 1199, 599, 299]
+    traffic_steps = [100000]
+    observer_steps = [100000]
 
     for config_file in config_files:
         for find_mode in find_modes:
