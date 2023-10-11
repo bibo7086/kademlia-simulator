@@ -68,7 +68,7 @@ public class KademliaObserver implements Control {
   private static int size;
 
   /** Maximum size in number of message entries */
-  private static final int MAX_MESSAGE = 10000;
+  private static final int MAX_MESSAGE = 1000;
 
   private static int accumulatedMessageCount = 0;
 
@@ -131,30 +131,91 @@ public class KademliaObserver implements Control {
    * @param filename the name of the file to write to
    */
   private static void writeMapFind(Map<String, Map<String, Object>> map, String filename) {
-    try (FileWriter writer =
-        new FileWriter(filename, true)) { // Use append mode to add data to the end of the file
+    try (FileWriter writer = new FileWriter(filename, true);
+        FileWriter averageWriter =
+            new FileWriter(
+                logFolderName
+                    + "/average_"
+                    + size
+                    + "_"
+                    + trafficStep
+                    + "_"
+                    + KademliaCommonConfig.FINDMODE
+                    + ".csv",
+                true)) {
+
       // Define the expected order of keys in the header
       String[] keys = {"src", "start", "stop", "messages", "hops", "id", "type"};
 
-      // Write the comma seperated keys as the header of the file
-      String header = String.join(",", keys) + "\n";
+      File file = new File(filename);
+      File averageFile =
+          new File(
+              logFolderName
+                  + "/average_"
+                  + size
+                  + "_"
+                  + trafficStep
+                  + "_"
+                  + KademliaCommonConfig.FINDMODE);
 
       // if the file is empty
-      File file = new File(filename);
-      if (file.length() == 0) { // Check if the file is empty
+      if (file.length() == 0 && averageFile.length() == 0) {
+
+        // Write the comma separated keys as the header of the file
+        String header = String.join(",", keys) + "\n";
+
+        // Write the header for file containing the headers for the incremental plots
+        String AverageHeader = "find_op,message_count,latency,hopcount\n";
+
+        averageWriter.write(AverageHeader);
         writer.write(header);
       }
 
+      double totalLatency = 0;
+      double totalHops = 0;
+      int count = 0;
+
       // Iterate through each find operation and write its data to the file
-      for (Map<String, Object> entry : find_log.values()) {
+      for (Map<String, Object> entry : map.values()) {
         StringBuilder lineBuilder = new StringBuilder();
         for (Object key : keys) {
           lineBuilder.append(entry.get(key)).append(",");
+
+          // Calculate the average of "stop" and "hops"
+          if (key.equals("stop")) {
+            totalLatency += ((Long) entry.get(key)).intValue();
+            count++;
+          } else if (key.equals("hops")) {
+            totalHops += (int) entry.get(key);
+          }
         }
         // Remove the last comma
         String line = lineBuilder.substring(0, lineBuilder.length() - 1) + "\n";
         writer.write(line);
       }
+
+      // Calculate averages
+      double averageLatency = totalLatency / count;
+      double averageHops = totalHops / count;
+
+      // Write average values to teh "average_writer" file
+      String averageLine =
+          find_op.getN()
+              + ","
+              + messages.size()
+              + ","
+              + String.format("%.2f", averageLatency)
+              + ","
+              + String.format("%.2f", averageHops)
+              + "\n";
+
+      averageWriter.write(averageLine);
+      // Print or use the average values as needed
+      // System.out.println("Count: " + count);
+      // System.out.println("Average Stop: " + String.format("%.2f", averageLatency));
+      // System.out.println("Average Hops: " + String.format("%.2f", averageHops));
+
+      averageWriter.close();
       writer.close();
     } catch (IOException e) {
       e.printStackTrace();
@@ -208,9 +269,25 @@ public class KademliaObserver implements Control {
                 + "_"
                 + KademliaCommonConfig.FINDMODE
                 + ".csv")) {
-      // Write the count data to the "count" file
-      String countHeader = "message_count, find_op, find_ok\n";
-      countWriter.write(countHeader);
+
+      // Check if the file is empty (newly created)
+      File file =
+          new File(
+              logFolderName
+                  + "/count_"
+                  + size
+                  + "_"
+                  + trafficStep
+                  + "_"
+                  + KademliaCommonConfig.FINDMODE
+                  + ".csv");
+
+      if (file.length() == 0) {
+        // Write the count data to the "count" file
+        String countHeader = "message_count, find_op, find_ok\n";
+        countWriter.write(countHeader);
+      }
+      
       String countLine =
           // writtenMessages.size()
           // + ","
@@ -257,7 +334,7 @@ public class KademliaObserver implements Control {
 
   private boolean shouldWriteOut() {
     if (CommonState.getEndTime() <= (observerStep + CommonState.getTime())
-        || accumulatedMessageCount >= MAX_MESSAGE) {
+        || find_op.getN() % 50 == 0) {
       return true;
     }
 
