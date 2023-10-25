@@ -1,6 +1,5 @@
 package peersim.kademlia;
 
-import java.math.BigInteger;
 import peersim.kademlia.operations.Operation;
 
 /**
@@ -15,7 +14,7 @@ public interface KademliaEvents {
    * @param op the operation that triggered the event
    * @param neighbours an array of BigIntegers representing neighboring nodes
    */
-  public void nodesFound(Operation op, BigInteger[] neighbours);
+  public void nodesFound(Operation op, String[] neighbours);
 
   /**
    * Callback method triggered when the operation is complete.

@@ -1,6 +1,6 @@
 package peersim.kademlia;
 
-import java.math.BigInteger;
+import java.util.Map;
 import java.util.TreeMap;
 import peersim.core.CommonState;
 
@@ -14,11 +14,11 @@ import peersim.core.CommonState;
 public class KBucket implements Cloneable {
 
   // k-bucket array
-  protected TreeMap<BigInteger, Long> neighbours = null;
+  protected TreeMap<String, Long> neighbours = null;
 
   /** Empty constructor for initializing the k-bucket TreeMap. */
   public KBucket() {
-    neighbours = new TreeMap<BigInteger, Long>();
+    neighbours = new TreeMap<String, Long>();
   }
 
   /**
@@ -27,7 +27,7 @@ public class KBucket implements Cloneable {
    * @param node the neighbor to be added.
    * @return true if the neighbor is successfully added; false if the k-bucket is already full.
    */
-  public boolean addNeighbour(BigInteger node) {
+  public boolean addNeighbour(String node) {
     long time = CommonState.getTime();
     if (neighbours.size() < KademliaCommonConfig.K) { // k-bucket isn't full
       neighbours.put(node, time); // add neighbor to the tail of the list
@@ -41,7 +41,7 @@ public class KBucket implements Cloneable {
    *
    * @param node the neighbour to be removed.
    */
-  public void removeNeighbour(BigInteger node) {
+  public void removeNeighbour(String node) {
     neighbours.remove(node);
   }
 
@@ -61,11 +61,44 @@ public class KBucket implements Cloneable {
    */
   public Object clone() {
     KBucket dolly = new KBucket();
-    for (BigInteger node : neighbours.keySet()) {
-      dolly.neighbours.put(new BigInteger(node.toByteArray()), 0l);
+    for (Map.Entry<String, Long> entry : neighbours.entrySet()) {
+      dolly.neighbours.put(new String(entry.getKey()), entry.getValue());
     }
     return dolly;
   }
+
+  // /**
+  //  * Returns a deep copy of the k-bucket object.
+  //  *
+  //  * @return a cloned k-bucket object.
+  //  */
+  // public Object clone() {
+  //   KBucket dolly = new KBucket();
+  //   for (String node : neighbours.keySet()) {
+  //     dolly.neighbours.put(new String(node.toByteArray()), 0l);
+  //   }
+  //   return dolly;
+  // }
+
+  // /**
+  //  * Returns a deep copy of the k-bucket object.
+  //  *
+  //  * @param cloneStringId true if the IDs should be cloned as strings, false if they should be
+  // cloned as BigIntegers.
+  //  * @return a cloned k-bucket object.
+  //  */
+  // public Object clone(boolean cloneStringId) {
+  //     KBucket dolly = new KBucket();
+  //     for (Map.Entry<String, Long> entry : neighbours.entrySet()) {
+  //         if (cloneStringId) {
+  //             dolly.neighbours.put(new String(entry.getKey()), entry.getValue());
+  //         } else {
+  //             BigInteger nodeId = new BigInteger(entry.getKey());
+  //             dolly.neighbours.put(nodeId.toString(), entry.getValue());
+  //         }
+  //     }
+  //     return dolly;
+  // }
 
   /**
    * Returns a string representation of the k-bucket object.
@@ -75,7 +108,7 @@ public class KBucket implements Cloneable {
   public String toString() {
     String res = "{\n";
 
-    for (BigInteger node : neighbours.keySet()) {
+    for (String node : neighbours.keySet()) {
       res += node + "\n";
     }
 

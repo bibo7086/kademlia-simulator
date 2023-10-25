@@ -217,7 +217,6 @@ public class EDSimulator {
    * @return true if the execution should be stopped.
    */
   private static boolean executeNext() {
-
     PriorityQ.Event ev = heap.removeFirst();
     if (ev == null) {
       System.err.println(
@@ -290,6 +289,7 @@ public class EDSimulator {
 
   /** Runs an experiment, resetting everything except the random seed. */
   public static void nextExperiment() {
+
     // Reading parameter
     if (Configuration.contains(PAR_PQ)) heap = (PriorityQ) Configuration.getInstance(PAR_PQ);
     else heap = new Heap();

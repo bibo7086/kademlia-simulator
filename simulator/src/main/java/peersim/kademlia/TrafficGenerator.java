@@ -1,6 +1,5 @@
 package peersim.kademlia;
 
-import java.math.BigInteger;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
 import peersim.core.Control;
@@ -44,7 +43,7 @@ public class TrafficGenerator implements Control {
     while (!n.isUp()) {
       n = Network.get(CommonState.r.nextInt(Network.size()));
     }
-    BigInteger dst = ((KademliaProtocol) (n.getProtocol(pid))).getKademliaNode().getId();
+    String dst = ((KademliaProtocol) (n.getProtocol(pid))).getKademliaNode().getId();
 
     Message m = Message.makeInitFindNode(dst);
     m.timestamp = CommonState.getTime();

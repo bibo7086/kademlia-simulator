@@ -1,7 +1,5 @@
 package peersim.kademlia;
 
-import java.math.BigInteger;
-
 /**
  * This class represent a timeout event.
  *
@@ -14,7 +12,7 @@ public class Timeout extends SimpleEvent {
   public static final int TIMEOUT = 100;
 
   /** The node which failed to response */
-  public BigInteger node;
+  public String node;
 
   /** The ID of the message sent to the node */
   public long msgID;
@@ -27,7 +25,7 @@ public class Timeout extends SimpleEvent {
    * Creates an empty message by using default values (message type = MSG_LOOKUP and <code>
    * new String("")</code> value for the body of the message)
    */
-  public Timeout(BigInteger node, long msgID, long opID) {
+  public Timeout(String node, long msgID, long opID) {
     super(TIMEOUT);
     this.node = node;
     this.msgID = msgID;

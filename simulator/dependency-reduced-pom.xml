@@ -142,6 +142,12 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>42.6.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>djep</groupId>
       <artifactId>djep</artifactId>
       <version>1.0.0</version>

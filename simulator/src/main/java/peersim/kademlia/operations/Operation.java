@@ -1,6 +1,5 @@
 package peersim.kademlia.operations;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -22,10 +21,10 @@ public abstract class Operation {
   protected long operationId;
 
   /** ID of the node to find */
-  protected BigInteger destNode;
+  protected String destNode;
 
   /** ID of the node initiating the operation */
-  protected BigInteger srcNode;
+  protected String srcNode;
 
   /** Body of the original find message */
   protected Object body;
@@ -36,7 +35,7 @@ public abstract class Operation {
   /** Number of hops the message did */
   public int nrHops = 0;
 
-  protected ArrayList<BigInteger> returned;
+  protected ArrayList<String> returned;
 
   /** Timestamp stop Operation */
   public long stopTime;
@@ -49,7 +48,7 @@ public abstract class Operation {
    *
    * @param destNode ID of the node to find
    */
-  public Operation(BigInteger srcNode, BigInteger dstNode, long timestamp) {
+  public Operation(String srcNode, String dstNode, long timestamp) {
     this.timestamp = timestamp;
     this.destNode = dstNode;
     this.srcNode = srcNode;
@@ -58,7 +57,7 @@ public abstract class Operation {
     // set a new find ID
     operationId = OPERATION_ID_GENERATOR++;
 
-    returned = new ArrayList<BigInteger>();
+    returned = new ArrayList<String>();
   }
 
   public void setBody(Object body) {
@@ -73,7 +72,7 @@ public abstract class Operation {
     return timestamp;
   }
 
-  public BigInteger getDestNode() {
+  public String getDestNode() {
     return destNode;
   }
 

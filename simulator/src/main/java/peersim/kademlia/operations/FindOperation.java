@@ -35,7 +35,7 @@ public class FindOperation extends Operation {
    * This map contains the K closest nodes and corresponding boolean value that indicates if the
    * nodes has been already queried or not
    */
-  protected HashMap<BigInteger, Boolean> closestSet;
+  protected HashMap<String, Boolean> closestSet;
 
   /**
    * defaul constructor
@@ -44,13 +44,13 @@ public class FindOperation extends Operation {
    * @param destNode Id of the node to find
    * @param timestamp Id of the node to find
    */
-  public FindOperation(BigInteger srcNode, BigInteger destNode, long timestamp) {
+  public FindOperation(String srcNode, String destNode, long timestamp) {
     super(srcNode, destNode, timestamp);
 
     // initialize closestSet
-    closestSet = new HashMap<BigInteger, Boolean>();
+    closestSet = new HashMap<String, Boolean>();
     findMode = KademliaCommonConfig.FINDMODE;
-    returned = new ArrayList<BigInteger>();
+    returned = new ArrayList<String>();
   }
 
   public int getAvailableRequests() {
@@ -65,7 +65,7 @@ public class FindOperation extends Operation {
     this.available_requests = requests;
   }
 
-  public HashMap<BigInteger, Boolean> getClosest() {
+  public HashMap<String, Boolean> getClosest() {
     return this.closestSet;
   }
 
@@ -77,10 +77,10 @@ public class FindOperation extends Operation {
    *
    * @param neighbours the array of neighbours to be added to the closest set
    */
-  public void elaborateResponse(BigInteger[] neighbours) {
+  public void elaborateResponse(String[] neighbours) {
 
     // Add each neighbor to the closest set
-    for (BigInteger n : neighbours) {
+    for (String n : neighbours) {
       if (n != null) {
         if (!closestSet.containsKey(n)) {
           // If closest set is not full, add directly
@@ -91,8 +91,8 @@ public class FindOperation extends Operation {
 
             // Find the node with max distance
             BigInteger maxdist = newdist;
-            BigInteger nodemaxdist = n;
-            for (BigInteger i : closestSet.keySet()) {
+            String nodemaxdist = n;
+            for (String i : closestSet.keySet()) {
               BigInteger dist = Util.xorDistance(i, destNode);
 
               if (dist.compareTo(maxdist) > 0) {
@@ -118,11 +118,11 @@ public class FindOperation extends Operation {
    *
    * @return the ID of the node or null if there are no available nodes
    */
-  public BigInteger getNeighbour() {
+  public String getNeighbour() {
     // Find closest neighbor (the first not already queried)
-    BigInteger res = null;
+    String res = null;
 
-    for (BigInteger n : closestSet.keySet()) {
+    for (String n : closestSet.keySet()) {
       if (n != null && closestSet.get(n) == false) {
         if (res == null) {
           res = n;
@@ -147,8 +147,8 @@ public class FindOperation extends Operation {
    *
    * @return the closest nodes set up to K
    */
-  public List<BigInteger> getNeighboursList() {
-    return new ArrayList<BigInteger>(closestSet.keySet());
+  public List<String> getNeighboursList() {
+    return new ArrayList<String>(closestSet.keySet());
     // return new ArrayList<BigInteger>(closestSet.keySet()).subList(0, KademliaCommonConfig.K-1);
   }
 
@@ -162,8 +162,8 @@ public class FindOperation extends Operation {
     for (int i = 0; i < Network.size(); i++) {
       Node node = Network.get(i);
       KademliaProtocol prot = (KademliaProtocol) (node.getProtocol(kademliaid));
-      BigInteger id = prot.node.getId();
-      double ratio = id.doubleValue() / max.doubleValue() * 360;
+      String id = prot.node.getId();
+      double ratio = (double) id.hashCode() / Integer.MAX_VALUE * 360;
       double alpha = Math.toRadians(ratio);
       double x = Math.cos(alpha);
       double y = Math.sin(alpha);
@@ -184,7 +184,7 @@ public class FindOperation extends Operation {
     org.graphstream.graph.Node dst = graph.getNode(destNode.toString());
     if (dst == null) {
       dst = graph.addNode(destNode.toString());
-      double ratio = destNode.doubleValue() / max.doubleValue() * 360;
+      double ratio = (double) destNode.hashCode() / max.doubleValue() * 360;
       double alpha = Math.toRadians(ratio);
       double x = Math.cos(alpha);
       double y = Math.sin(alpha);

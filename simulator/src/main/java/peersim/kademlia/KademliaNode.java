@@ -4,7 +4,7 @@ import java.math.BigInteger;
 
 /** A Kademlia node, identified by its ID, IP address and port. */
 public class KademliaNode implements Comparable<KademliaNode> {
-  private BigInteger id;
+  private String id;
   /** attackerId is the ID used by Sybil nodes (when multiple nodes */
   private BigInteger attackerID;
 
@@ -23,7 +23,7 @@ public class KademliaNode implements Comparable<KademliaNode> {
    * @param addr The IP address of the node
    * @param port The port of the node
    */
-  public KademliaNode(BigInteger id, String addr, int port) {
+  public KademliaNode(String id, String addr, int port) {
     this.id = id;
     this.attackerID = null;
     this.addr = addr;
@@ -39,7 +39,7 @@ public class KademliaNode implements Comparable<KademliaNode> {
    * @param addr the IP address of the node
    * @param port the port of the node
    */
-  public KademliaNode(BigInteger id, BigInteger attackerId, String addr, int port) {
+  public KademliaNode(String id, BigInteger attackerId, String addr, int port) {
     this.id = id;
     this.attackerID = attackerId;
     this.addr = addr;
@@ -52,7 +52,7 @@ public class KademliaNode implements Comparable<KademliaNode> {
    *
    * @param id the ID of the node
    */
-  public KademliaNode(BigInteger id) {
+  public KademliaNode(String id) {
     this.id = id;
     this.addr = "127.0.0.1";
     this.port = 666;
@@ -78,7 +78,7 @@ public class KademliaNode implements Comparable<KademliaNode> {
    *
    * @return the ID of the node
    */
-  public BigInteger getId() {
+  public String getId() {
     return this.id;
   }
 

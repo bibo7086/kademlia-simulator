@@ -287,7 +287,7 @@ public class KademliaObserver implements Control {
         String countHeader = "message_count, find_op, find_ok\n";
         countWriter.write(countHeader);
       }
-      
+
       String countLine =
           // writtenMessages.size()
           // + ","

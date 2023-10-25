@@ -1,5 +1,6 @@
 package peersim.kademlia;
 
+import java.math.BigInteger;
 import java.util.Comparator;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
@@ -115,8 +116,8 @@ public class Turbulence implements Control {
             Node n2 = (Node) o2;
             KademliaProtocol p1 = (KademliaProtocol) (n1.getProtocol(kademliaid));
             KademliaProtocol p2 = (KademliaProtocol) (n2.getProtocol(kademliaid));
-            return Util.put0(p1.getKademliaNode().getId())
-                .compareTo(Util.put0(p2.getKademliaNode().getId()));
+            return Util.put0_test(p1.getKademliaNode().getId())
+                .compareTo(Util.put0_test(p2.getKademliaNode().getId()));
           }
 
           // ______________________________________________________________________________________
@@ -195,7 +196,10 @@ public class Turbulence implements Control {
     // Set node ID
     UniformRandomGenerator urg =
         new UniformRandomGenerator(KademliaCommonConfig.BITS, CommonState.r);
-    KademliaNode node = new KademliaNode(urg.generate(), "127.0.0.1", 0);
+
+    BigInteger string_id = urg.generate();
+
+    KademliaNode node = new KademliaNode(string_id.toString(), "127.0.0.1", 0);
     ((KademliaProtocol) (newNode.getProtocol(kademliaid))).setNode(node);
 
     // Sort the network

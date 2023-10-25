@@ -1,6 +1,5 @@
 package peersim.kademlia;
 
-import java.math.BigInteger;
 import java.util.Comparator;
 import peersim.config.Configuration;
 import peersim.core.CommonState;
@@ -91,8 +90,8 @@ public class StateBuilder implements peersim.core.Control {
             Node n2 = (Node) o2;
             KademliaProtocol p1 = (KademliaProtocol) (n1.getProtocol(kademliaid));
             KademliaProtocol p2 = (KademliaProtocol) (n2.getProtocol(kademliaid));
-            return Util.put0(p1.getKademliaNode().getId())
-                .compareTo(Util.put0(p2.getKademliaNode().getId()));
+            return Util.put0_test(p1.getKademliaNode().getId())
+                .compareTo(Util.put0_test(p2.getKademliaNode().getId()));
           }
         });
 
@@ -113,7 +112,7 @@ public class StateBuilder implements peersim.core.Control {
     for (int i = 0; i < sz; i++) {
       Node iNode = Network.get(i);
       KademliaProtocol iKad = (KademliaProtocol) (iNode.getProtocol(kademliaid));
-      BigInteger iNodeId = iKad.getKademliaNode().getId();
+      String iNodeId = iKad.getKademliaNode().getId();
 
       int start = i + 1;
       if (start > sz - 50) {
@@ -123,7 +122,7 @@ public class StateBuilder implements peersim.core.Control {
         start++;
         if (start < sz) {
           KademliaProtocol jKad = (KademliaProtocol) (Network.get(start).getProtocol(kademliaid));
-          BigInteger jNodeId = jKad.getKademliaNode().getId();
+          String jNodeId = jKad.getKademliaNode().getId();
           if (!jNodeId.equals(iNodeId)) {
             iKad.getRoutingTable().addNeighbour(jKad.getKademliaNode().getId());
           }

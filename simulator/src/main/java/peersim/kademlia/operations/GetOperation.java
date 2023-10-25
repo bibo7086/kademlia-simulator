@@ -1,7 +1,5 @@
 package peersim.kademlia.operations;
 
-import java.math.BigInteger;
-
 /** An extension of the FindOperation calss to represent the GetOperation. */
 public class GetOperation extends FindOperation {
 
@@ -14,7 +12,7 @@ public class GetOperation extends FindOperation {
    * @param destNode the ID of the destination node to find.
    * @param timestamp the timestamp of the operation.
    */
-  public GetOperation(BigInteger srcNode, BigInteger destNode, long timestamp) {
+  public GetOperation(String srcNode, String destNode, long timestamp) {
     super(srcNode, destNode, timestamp);
   }
 
